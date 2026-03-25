@@ -1307,7 +1307,9 @@ class ETIMSHelper
                 'isrcAmt' => $item->insurance_amount ? round($item->insurance_amount,2) : $item->insurance_amount,
                 'taxTyCd' => $item->tax_type_code,
                 'taxblAmt' => $item->taxable_amount ? round($item->taxable_amount,2) : $item->taxable_amount,
+                'vatTaxblAmt' => $item->taxable_amount ? round($item->taxable_amount,2) : $item->taxable_amount,
                 'taxAmt' => $item->tax_amount ? round($item->tax_amount,2) : $item->tax_amount,
+                'vatAmt' => $item->tax_amount ? round($item->tax_amount,2) : $item->tax_amount,
                 'totAmt' => $item->total_amount ? round($item->total_amount,2) : $item->total_amount,
             ];
 
