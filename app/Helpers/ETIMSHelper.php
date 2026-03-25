@@ -29,7 +29,6 @@ use App\Models\StockInOut;
 use App\Models\StockInOutItem;
 use App\Models\StockMaster;
 use App\Models\User;
-use App\Models\Supplier;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use GuzzleHttp\Client;
@@ -43,14 +42,14 @@ class ETIMSHelper
     public static function initialize_branch(Branch $branch)
     {
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "dvcSrlNo" => $branch->device_serial_number
         ];
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/initializer/selectInitInfo', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectInitOsdcInfo', $data);
@@ -80,7 +79,7 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/code/selectCodes', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectCodeList', $data);
@@ -104,7 +103,7 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/notices/selectNotices', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectNoticeList', $data);
@@ -141,7 +140,7 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/itemClass/selectItemsClass', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectItemClsList', $data);
@@ -153,7 +152,7 @@ class ETIMSHelper
         return $response;
     }
 
-    public static function itemSearch(Branch $branch, $subMonths = 72)
+    public static function itemSearch(Branch $branch,$subMonths = 72)
     {
         $date = Carbon::today()->sub('month', $subMonths)->format('Ymd');
 
@@ -162,7 +161,7 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/items/selectItems', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectItemList', $data);
@@ -181,7 +180,7 @@ class ETIMSHelper
 
         $branch = Branch::first();
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/branches/selectBranches', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectBhfList', $data);
@@ -196,26 +195,11 @@ class ETIMSHelper
     {
         $date = Carbon::today()->subMonth($subMonths)->format('Ymd');
 
-        $data = ["lastReqDt" => $date . "000000", 'custmTin' => 'A000000000P'];
+        $data = ["lastReqDt" => $date . "000000",'custmTin'=>'A000000000P'];
 
         $branch = Branch::first();
 
-        if ($branch->solution_type == 'vscu')
-            $response = self::sendGuzzleRequest($branch, '/customers/selectCustomer', $data);
-        else
-            $response = self::sendGuzzleRequest($branch, '/selectCustomer', $data);
-
-        return $response;
-    }
-    public static function getSupplierList($subMonths = 72)
-    {
-        $date = Carbon::today()->subMonth($subMonths)->format('Ymd');
-
-        $data = ["lastReqDt" => $date . "000000", 'custmTin' => 'A000000000P'];
-
-        $branch = Branch::first();
-
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/customers/selectCustomer', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectCustomer', $data);
@@ -230,7 +214,7 @@ class ETIMSHelper
         foreach ($responseData['bhfList'] as $branch):
             $data = [
                 'company_id' => $company->id,
-                'kra_pin' => $branch['tin'],
+                'kra_pin' => $branch['tpin'],
                 'slug' => Utilities::getModelSlug($branch['bhfNm'], 'branch'),
                 'branch_code' => $branch['bhfId'],
                 'tracking_number' => $branch['bhfId'],
@@ -253,10 +237,10 @@ class ETIMSHelper
     {
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
-            "custNo" => $customer->id,
-            "custTin" => $customer->kra_pin,
+            "custNo" => str_starts_with($customer->phone, '260') ? substr($customer->phone, 3) : $customer->phone,
+            "custTpin" => $customer->kra_pin,
             "custNm" => $customer->name,
             "adrs" => $customer->location,
             "telNo" => $customer->phone,
@@ -274,17 +258,17 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/branches/saveBrancheCustomers', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/saveBhfCustomer', $data);
 
-        if ($response->resultCd == "000") {
-            $customer->update(['synced_to_etims' => 1]);
+        if ($response->resultCd == "000"){
+            $customer->update(['synced_to_etims'=>1]);
             // TransmissionQueueManager::processQueue();
 
             // WebHooksHelper::sendCustomerTransmittedSuccess($customer, $branch->kra_pin);
-        }
+           }
 
         return $response;
     }
@@ -293,13 +277,13 @@ class ETIMSHelper
     {
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
 
             "userId" =>  $user->id,
             "userNm" => $user->username,
-            "pwd" => $user->password,
-            "adrs" => $user->address,
+            "pwd" => Hash::make($user->password),
+            "adrs" => $branch->name,
             "cntc" => $user->contact,
             "authCd" => $user->authority_code,
             "remark" => $user->remark,
@@ -312,16 +296,16 @@ class ETIMSHelper
         // Log::info('Transmitting User...');
 
 
-        if ($branch->solution_type == 'vscu')
-            $response = self::sendGuzzleRequest($branch, '/branches/saveBrancheUsers', $data);
+        if( $branch->solution_type == 'vsdc' )
+            $response = self::sendGuzzleRequest($branch, '/branches/saveBrancheUser', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/saveBhfUser', $data);
 
-        if ($response->resultCd == "000") {
-            $user->update(['synced_to_etims' => 1]);
+        if ($response->resultCd == "000"){
+             $user->update(['synced_to_etims'=>1]);
             // TransmissionQueueManager::processQueue();
             //  WebHooksHelper::sendUserTransmittedSuccess($user, $branch->kra_pin);
-        }
+            }
 
         return $response;
     }
@@ -330,7 +314,7 @@ class ETIMSHelper
     {
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "cmcKey" => $branch->cmc_key,
             "isrccCd" => $insurance->insurance_company_code,
@@ -345,7 +329,7 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/branches/saveBrancheInsurances', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/saveBhfInsurance', $data);
@@ -362,12 +346,12 @@ class ETIMSHelper
 
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "sarNo" => $stockInOut->stored_and_released_number, //// should be sequential (stored and released number)
             "orgSarNo" => $stockInOut->original_stored_and_released_number ? $stockInOut->original_stored_and_released_number : 0, // original stored and released number
             "regTyCd" =>  $stockInOut->registration_type_code  ? $stockInOut->registration_type_code : "M", //registration type M (manual) A (automatic)
-            "custTin" => $stockInOut->customer_kra_pin,
+            "custTpin" => $stockInOut->customer_kra_pin,
             "custNm" => $customerBranchName, //from invoice customer
             "custBhfId" => $customerBranchCode,
             "sarTyCd" => $stockInOut->stored_and_released_type_code,
@@ -388,41 +372,43 @@ class ETIMSHelper
 
         try {
             //code...
-            if ($branch->solution_type == 'vscu')
+            if( $branch->solution_type == 'vsdc' )
                 $response = self::sendGuzzleRequest($branch, '/stock/saveStockItems', $data);
             else
                 $response = self::sendGuzzleRequest($branch, '/insertStockIO', $data);
 
             if (isset($response->resultCd) && $response->resultCd == "000"):
-                $stockInOut->update(['synced_at' => now(), "synced_to_etims" => 1]);
+                $stockInOut->update(['synced_at' => now(), "synced_to_etims" =>1 ]);
                 TransmissionQueueManager::markJobAsCompleted($stockInOut);
 
-                WebHooksHelper::sendStockIOTransmittedSuccess($stockInOut, $branch->kra_pin);
+                WebHooksHelper::sendStockIOTransmittedSuccess ($stockInOut, $branch->kra_pin);
             else:
                 TransmissionQueueManager::markJobAsFailed($stockInOut, $response);
             endif;
 
-            Log::info(json_encode($response));
+        Log::info(json_encode($response));
 
-            return $response;
+        return $response;
         } catch (\Throwable $th) {
             //throw $th;
             Log::error($th);
             TransmissionQueueManager::markJobAsFailed($stockInOut, $th);
         }
+
+
     }
     public static function getImportItemList(Branch $branch, $subMonths = 72)
     {
         $date = Carbon::today()->sub('month', $subMonths)->format('Ymd');
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "lastReqDt" => $date . "000000"
         ];
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/imports/selectImportItems', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectImportItemList', $data);
@@ -501,7 +487,7 @@ class ETIMSHelper
     {
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "taskCd" => $data['task_code'],
             "dclDe" => $data['declaration_date'],
@@ -517,7 +503,7 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/imports/updateImportItems', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/updateImportItem', $data);
@@ -532,14 +518,14 @@ class ETIMSHelper
         $date = Carbon::today()->subMonths($subMonths)->format('Ymd');
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "lastReqDt" => $date . "000000"
         ];
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/trnsPurchase/selectTrnsPurchaseSales', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/selectTrnsPurchaseSalesList', $data);
@@ -561,7 +547,7 @@ class ETIMSHelper
             $etimsPurchase = self::saveEtimsPurchase($branch, $list);
             if (empty($etimsPurchase)) continue;
             self::saveEtimsPurchaseItems($etimsPurchase, $list);
-        // AcknowledgeEtimsPurchase::dispatch($etimsPurchase->fresh());
+            // AcknowledgeEtimsPurchase::dispatch($etimsPurchase->fresh());
         endforeach;
     }
 
@@ -581,8 +567,7 @@ class ETIMSHelper
             'supplier_invoice_number' => $data->spplrInvcNo,
             'receipt_type_code' => $data->rcptTyCd,
             'payment_type_code' => $data->pmtTyCd,
-            // 'validated_date' => $data->cfmDt,
-              "cfmDt" => Carbon::now()->format('YmdHis'),
+            'validated_date' => $data->cfmDt,
             'sale_date' => $data->salesDt,
             'stock_release_date' => $data->stockRlsDt,
             'total_item_count' => $data->totItemCnt,
@@ -651,8 +636,8 @@ class ETIMSHelper
                 "insurance_rate" => $item->isrcRt ?? null, //create column
                 "insurance_amount" => $item->isrcAmt ?? null, //create column
                 "expiry_date" => $item->itemExprDt ?? null, //create column
-                'status' => null, //self::checkIfItemIsService($item->itemCd) ? 'processed' : null, //if is a service set 'processed'
-                'processed_at' => null //self::checkIfItemIsService($item->itemCd) ? now() : null //i//if is a service set now()
+                'status' => null,//self::checkIfItemIsService($item->itemCd) ? 'processed' : null, //if is a service set 'processed'
+                'processed_at' => null//self::checkIfItemIsService($item->itemCd) ? now() : null //i//if is a service set now()
             ]);
         endforeach;
     }
@@ -669,42 +654,44 @@ class ETIMSHelper
     public static function saveStockMaster(StockMaster $stockMaster, Branch $branch, User $staff)
     {
             $data = [
-                "tin"    => $branch->kra_pin,
+                "tpin"    => $branch->kra_pin,
                 "bhfId"  => $branch->branch_code,
                 "itemCd" => $stockMaster->item_code,
-                "rsdQty" => $stockMaster->remaining_quantity ? round($stockMaster->remaining_quantity,2) : $stockMaster->remaining_quantity,
+                "rsdQty" => $stockMaster->remaining_quantity,
                 "regrId" => $staff->id,
                 "regrNm" => ucwords($staff->first_name),
                 "modrId" => $staff->id,
                 "modrNm" => ucwords($staff->first_name)
             ];
 
-        // Log::info("Transmitting stock master: $stockMaster->id ...");
+            // Log::info("Transmitting stock master: $stockMaster->id ...");
 
-        try {
-            //code...
+            try {
+                //code...
 
 
-            if ($branch->solution_type == 'vscu')
+            if( $branch->solution_type == 'vsdc' )
                 $response = self::sendGuzzleRequest($branch, '/stockMaster/saveStockMaster', $data);
             else
                 $response = self::sendGuzzleRequest($branch, '/saveStockMaster', $data);
             // Log::info(json_encode($response));
-            if (isset($response->resultCd) && $response->resultCd == "000"):
-                $stockMaster->update(['synced_at' => now()]);
+            if ( isset($response->resultCd) && $response->resultCd == "000"):
+                $stockMaster->update(['synced_at'=>now()]);
                 TransmissionQueueManager::markJobAsCompleted($stockMaster);
-            else :
-                TransmissionQueueManager::markJobAsFailed($stockMaster, $response);
-            endif;
-        } catch (\Throwable $th) {
-            //throw $th;
-            TransmissionQueueManager::markJobAsFailed($stockMaster, $th);
-        }
+              else :
+                 TransmissionQueueManager::markJobAsFailed($stockMaster, $response);
+              endif;
+            } catch (\Throwable $th) {
+                //throw $th;
+                TransmissionQueueManager::markJobAsFailed($stockMaster, $th);
+            }
+
+
     }
 
     private static function updateSuccessfulStockInOutSync(StockInOut $stockInOut)
     {
-        $stockInOut->update(['synced_at' => now(), "synced_to_etims" => 1,]);
+            $stockInOut->update(['synced_at' => now(), "synced_to_etims" =>1, ]);
     }
     private static function updateSuccessfulInvoiceSync(Invoice $invoice)
     {
@@ -728,14 +715,14 @@ class ETIMSHelper
         $date = Carbon::today()->sub('month', $subMonths)->format('Ymd');
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "lastReqDt" => $date . "000000"
         ];
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = Self::sendGuzzleRequest($branch, '/stock/selectStockItems', $data);
         else
             $response = Self::sendGuzzleRequest($branch, '/selectStockMoveList', $data);
@@ -747,7 +734,7 @@ class ETIMSHelper
         $date = Carbon::today()->sub('month', $subMonths)->format('Ymd');
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "lastReqDt" => $date . "000000"
         ];
@@ -757,8 +744,8 @@ class ETIMSHelper
 
     public static function getInvoice(Branch $branch, Invoice $invoice)
     {
-        $data = [
-            "tin" => $branch->kra_pin,
+       $data = [
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "invcNo" => $invoice->invoice_number
         ];
@@ -766,11 +753,12 @@ class ETIMSHelper
         try {
             $response = Self::sendGuzzleRequest($branch, '/selectInvoiceDetails', $data);
             // Log::info(json_encode($response));
-            if (isset($response->resultCd) && $response->resultCd == "000") {
+            if(isset($response->resultCd) && $response->resultCd == "000")
+            {
                 if (empty($response->data)) return;
-                if (empty($response->data['salesList'])) return;
+                if( empty($response->data['salesList'])) return;
 
-                foreach ($response->data['salesList'] as $resData):
+                foreach( $response->data['salesList'] as $resData):
                     $resObj = (object) $resData['receipt'];
                     $data = [
                         'etims_current_reciept_number' => $resObj->curRcptNo,
@@ -782,10 +770,10 @@ class ETIMSHelper
                         'etims_control_unit_invoice_number' => $resObj->curRcptNo,
                         'etims_receipt_reference_number' => $resObj->rcptSign,
                         "synced_at" =>  now(),
-                        "synced_to_etims" => 1,
+                        "synced_to_etims" =>1,
                     ];
                     // Log::alert(json_encode($data));
-                    self::updateInvoiceData($invoice, $data);
+                    self::updateInvoiceData($invoice,$data);
                     TransmissionQueueManager::markJobAsCompleted($invoice);
                     InvoiceTransmitedWebHookJob::dispatch($invoice, $branch->kra_pin);
                 endforeach;
@@ -799,31 +787,17 @@ class ETIMSHelper
         // Log::alert( json_encode($response));
     }
 
-    public static function getInvoiceList(Branch $branch, Carbon $date)
+    public static function getInvoiceList(Branch $branch, $subDays = 1)
     {
-        $date = $date->format('Ymd');
-        $data = [
-            "tin" => $branch->kra_pin,
-            "bhfId" => $branch->branch_code,
-            "lastReqDt" => $date . "000000"
-        ];
+        // $date = Carbon::today()->sub('day', $subDays)->format('Ymd');
+        // $data = [
+        //     "tpin" => $branch->kra_pin,
+        //     "bhfId" => $branch->branch_code,
+        //     "lastReqDt" => $date . "000000"
+        // ];
 
-        $response = self::sendGuzzleRequest($branch, '/selectTrnsSalesList', $data);
-
-        return $response;
-    }
-    public static function getInvoiceListByNumber(Branch $branch, $invoice_number)
-    {
-        $data = [
-            "tin" => $branch->kra_pin,
-            "bhfId" => $branch->branch_code,
-            "invcNo" => $invoice_number
-
-        ];
-
-        $response = self::sendGuzzleRequest($branch, '/selectInvoiceDetails', $data);
-
-        return $response;
+        // $response = self::sendGuzzleRequest($branch, '/selectTrnsSalesList', $data);
+        // echo json_encode($response);
     }
 
 
@@ -835,31 +809,29 @@ class ETIMSHelper
 
         $originalInvoice = Invoice::find($invoice->original_invoice_id);
 
+        $originalcustomerKraPIN = $originalInvoice ? $originalInvoice->customer_kra_pin : null;
+        $originalcustomerName = $originalInvoice ? $originalInvoice->customer_name : null;
 
-        // $originalcustomerKraPIN = $originalInvoice ? $originalInvoice->customer_kra_pin : null;
-        // $originalcustomerName = $originalInvoice ? $originalInvoice->customer_name : null;
-
-        // $customerKraPIN = $customer ? $customer->kra_pin : null;
-        // $customerName = $customer ? $customer->name : null;
+        $customerKraPIN = $customer ? $customer->kra_pin : null;
+        $customerName = $customer ? $customer->name : null;
 
         $env = env('ETIMS_ENV');
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "trdInvcNo" => $invoice->purchase_invoice_number,
             "invcNo" =>  $env == 'local' && $branch->kra_pin == 'P051896935Z' ? time() : $invoice->invoice_number,
             "orgInvcNo" => $invoice->original_invoice_number,
 
-            "custTin" => $invoice->customer_kra_pin, //$originalcustomerKraPIN ? $originalcustomerKraPIN : $customerKraPIN,
-            "custNm" => $invoice->customer_name, //$originalcustomerKraPIN && $originalcustomerName ? $originalcustomerName : $customerName,
+            "custTpin" => $originalcustomerKraPIN ? $originalcustomerKraPIN : $customerKraPIN,
+            "custNm" => $originalcustomerName ? $originalcustomerName : $customerName,
 
             "salesTyCd" => $invoice->sales_type_code,
             "rcptTyCd" => $invoice->receipt_type_code,
             "pmtTyCd" => $invoice->payment_type_cAPP_ENVode,
             "salesSttsCd" => $invoice->sale_status_code,
-            // "cfmDt" => $invoice->validated_date,
-            "cfmDt" => Carbon::now()->format('YmdHis'),
+            "cfmDt" => $invoice->validated_date,
             "salesDt" => $invoice->sale_date,
             "stockRlsDt" => $invoice->stock_released_date,
             "cnclReqDt" => $invoice->cancel_requested_date,
@@ -892,7 +864,7 @@ class ETIMSHelper
             "modrId" => $staff->id,
             "modrNm" => $staff->first_name,
             "receipt" => [
-                "custTin" => !is_null($customer) ? $customer->kra_pin : '',
+                "custTpin" => !is_null($customer) ? $customer->kra_pin : '',
                 "custMblNo" => !is_null($customer) ? $customer->phone : '',
                 "rcptPbctDt" => now()->format('YmdHis'),
                 "trdeNm" => $invoice->trade_name,
@@ -913,19 +885,15 @@ class ETIMSHelper
             //code...
 
 
-            if ($branch->solution_type == 'vscu')
+            if( $branch->solution_type == 'vsdc' )
                 $response = self::sendGuzzleRequest($branch, '/trnsSales/saveSales', $data);
             else
                 $response = self::sendGuzzleRequest($branch, '/saveTrnsSalesOsdc', $data);
-            if (isset($response->resultCd) && $response->resultCd == "000") {
+            if (isset($response->resultCd) && $response->resultCd == "000"){
                 self::updateInvoice($invoice, $response);
                 TransmissionQueueManager::markJobAsCompleted($invoice);
 
                 InvoiceTransmitedWebHookJob::dispatch($invoice, $branch->kra_pin);
-            }
-            else if(isset($response->resultCd) && $response->resultCd == "924"){
-                $invoice->forceDelete();
-                TransmissionQueueManager::markJobAsCompleted($invoice);
             }else {
                 TransmissionQueueManager::markJobAsFailed($invoice, $response);
             }
@@ -934,93 +902,12 @@ class ETIMSHelper
             //throw $th;
             TransmissionQueueManager::markJobAsFailed($invoice, $th);
         }
-    }
-    public static function recordNewReverseInvoice(Invoice $invoice, Branch $branch, User $staff)
-    {
 
-        $itemsList = self::generateInvoiceItemList($invoice);
 
-        $supplier = $invoice->supplier;
 
-        $env = env('ETIMS_ENV');
 
-        $data = [
-            "tin" => $supplier->kra_pin,
-            "bhfId" => $supplier->etims_branch_code,
-            "trdInvcNo" => $invoice->purchase_invoice_number,
-            "invcNo" =>  $env == 'local' && $supplier->kra_pin == 'P051896935Z' ? time() : $invoice->invoice_number,
-            "orgInvcNo" => $invoice->original_invoice_number,
 
-            "custTin" => $branch->kra_pin,
-            "custNm" => $branch->company->name ?? '',
 
-            "salesTyCd" => $invoice->sales_type_code,
-            "rcptTyCd" => $invoice->receipt_type_code,
-            "pmtTyCd" => $invoice->payment_type_cAPP_ENVode,
-            "salesSttsCd" => $invoice->sale_status_code,
-            // "cfmDt" => $invoice->validated_date,
-              "cfmDt" => Carbon::now()->format('YmdHis'),
-            "salesDt" => $invoice->sale_date,
-            "stockRlsDt" => $invoice->stock_released_date,
-            "cnclReqDt" => $invoice->cancel_requested_date,
-            "cnclDt" => $invoice->canceled_date,
-            "rfdDt" => $invoice->credit_note_date,
-            "rfdRsnCd" => $invoice->credit_note_reason_code,
-            "totItemCnt" => $invoice->items()->count(),
-            "taxblAmtA" => round($invoice->taxable_amount_A, 2),
-            "taxblAmtB" => round($invoice->taxable_amount_B, 2),
-            "taxblAmtC" => round($invoice->taxable_amount_C, 2),
-            "taxblAmtD" => round($invoice->taxable_amount_D, 2),
-            "taxblAmtE" => round($invoice->taxable_amount_E, 2),
-            "taxRtA" => $invoice->tax_rate_A,
-            "taxRtB" => $invoice->tax_rate_B,
-            "taxRtC" => $invoice->tax_rate_C,
-            "taxRtD" => $invoice->tax_rate_D,
-            "taxRtE" => $invoice->tax_rate_E,
-            "taxAmtA" => round($invoice->tax_amount_A, 2),
-            "taxAmtB" => round($invoice->tax_amount_B, 2),
-            "taxAmtC" => round($invoice->tax_amount_C, 2),
-            "taxAmtD" => round($invoice->tax_amount_D, 2),
-            "taxAmtE" => round($invoice->tax_amount_E, 2),
-            "totTaxblAmt" => round($invoice->total_taxable_amount, 2),
-            "totTaxAmt" => round($invoice->total_tax_amount, 2),
-            "totAmt" => round($invoice->total_amount, 2),
-            "prchrAcptcYn" => $invoice->purchase_acceptance_status, // purchase accept yes(Y)/ no(N)
-            "remark" => $invoice->remark,
-            "regrId" => $staff->id,
-            "regrNm" => $staff->first_name,
-            "modrId" => $staff->id,
-            "modrNm" => $staff->first_name,
-            "receipt" => [
-                "custTin" => $branch->kra_pin ?? '',
-                "custMblNo" => $branch->phone ?? '',
-                "rcptPbctDt" => now()->format('YmdHis'),
-                "trdeNm" => $invoice->trade_name,
-                "adrs" => $invoice->address,
-                "topMsg" => $invoice->top_message,
-                "btmMsg" => $invoice->bottom_message,
-                "prchrAcptcYn" => $invoice->purchase_acceptance_status
-            ],
-            "itemList" =>  $itemsList,
-        ];
-
-        try {
-
-            $response = self::sendRevereseInvoiceGuzzleRequest($supplier, '/saveTrnsSalesOsdc', $data);
-
-            if (isset($response->resultCd) && $response->resultCd == "000") {
-                self::updateInvoice($invoice, $response);
-                TransmissionQueueManager::markJobAsCompleted($invoice);
-
-                InvoiceTransmitedWebHookJob::dispatch($invoice, $branch->kra_pin);
-            } else {
-                TransmissionQueueManager::markJobAsFailed($invoice, $response);
-            }
-            return $response;
-        } catch (\Throwable $th) {
-            //throw $th;
-            TransmissionQueueManager::markJobAsFailed($invoice, $th);
-        }
     }
 
 
@@ -1029,7 +916,7 @@ class ETIMSHelper
         $role = $staff->roles()->first();
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "regbhfId" => $branch->branch_code,
             "bhfId" => $branch->branch_code,
             "itemCd" => $item->item_code,
@@ -1059,16 +946,16 @@ class ETIMSHelper
             "modrNm" => $role ? ucwords(str_replace('-', ' ', $role->name)) : ucwords($staff->first_name)
         ];
 
-        Log::info($data);
+        // Log::info("Save Item call:");
 
 
-        if ($branch->solution_type == 'vscu')
-            $response = self::sendGuzzleRequest($branch, '/items/saveItems', $data);
+        if( $branch->solution_type == 'vsdc' )
+            $response = self::sendGuzzleRequest($branch, '/items/saveItem', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/saveItem', $data);
         // Log::info(json_encode($response));
         if ($response->resultCd == "000") {
-            $item->update(['synced_at' => now()]);
+            $item->update([ 'synced_at'=> now()  ]);
             // TransmissionQueueManager::processQueue();
             // StockItemTransmittedWebHookJob::dispatch($item, $branch->kra_pin);
         }
@@ -1078,10 +965,10 @@ class ETIMSHelper
     public static function itemComposition(ItemCompositionItem $item, Branch $branch, User $staff)
     {
         $itemComposition = $item->item_composition;
-        if (is_null($itemComposition)) return;
+        if (is_null($itemComposition)) return ;
 
         $data = [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "itemCd" => $itemComposition->item_code,
             "cpstItemCd" => $item->item_code,
@@ -1094,7 +981,7 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             $response = self::sendGuzzleRequest($branch, '/items/saveItemComposition', $data);
         else
             $response = self::sendGuzzleRequest($branch, '/saveItemComposition', $data);
@@ -1113,10 +1000,10 @@ class ETIMSHelper
         $itemsList = self::generatePurchaseItemList($purchase, $mappedProduct);
 
         $data =   [
-            "tin" => $branch->kra_pin,
+            "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "invcNo" => $purchase->supplier_invoice_number,
-            "orgInvcNo" => 0, //$purchase->supplier_invoice_number,
+            "orgInvcNo" => 0,//$purchase->supplier_invoice_number,
             "spplrTin" => $purchase->supplier_kra_pin,
             "spplrBhfId" => $purchase->supplier_branch_code,
             "spplrNm" => $purchase->supplier_name,
@@ -1126,8 +1013,7 @@ class ETIMSHelper
             "rcptTyCd" => "P", // receipt type sale
             "pmtTyCd" => $purchase->payment_type_code,
             "pchsSttsCd" => "02", //approved
-            // "cfmDt" => $purchase->validated_date ? $purchase->validated_date->format('YmdHis') : '',
-              "cfmDt" => Carbon::now()->format('YmdHis'),
+            "cfmDt" => $purchase->validated_date ? $purchase->validated_date->format('YmdHis') : '',
             "pchsDt" => $purchase->sale_date,
             "wrhsDt" => "",
             "cnclReqDt" => "",
@@ -1167,7 +1053,7 @@ class ETIMSHelper
 
 
 
-        if ($branch->solution_type == 'vscu')
+        if( $branch->solution_type == 'vsdc' )
             self::sendGuzzleRequest($branch, '/trnsPurchase/savePurchases', $data);
         else
             self::sendGuzzleRequest($branch, '/insertTrnsPurchase', $data);
@@ -1175,202 +1061,44 @@ class ETIMSHelper
     }
 
 
-    public static function generateSupplierToken(Branch $branch, Supplier $supplier)
-    {
-
-        $request = [
-            "platformCode" => $branch->kra_pin,
-            "taxpayerPin" => $supplier->kra_pin,
-            "solutionType" =>  "04" // - OSCU
-        ];
-        $response =  self::sendGuzzleRequest($branch, '/generateToken', $request);
-        if ($response->RESULT['info']['cuSerialNo'] ?? null)
-            $supplier->update(['etims_token' => $response->RESULT['info']['token'] ?? '']);
-
-      return  $response;
-    }
-
-    public static function validateSupplierToken(Branch $branch, Supplier $supplier)
-    {
-
-        $request = [
-            "platformCode" => $branch->kra_pin,
-            "taxpayerPin" => $supplier->kra_pin,
-            "solutionType" => "04", // OSCU
-            "type" =>  "02", // VAT status
-            "token" => $supplier->etims_token, // "KRATK04_8246e" //generated token
-        ];
-
-        $response =  self::sendGuzzleRequest($branch, '/validateToken', $request);
-        if ($response->RESULT['info']['cuSerialNo'] ?? null)
-            $supplier->update([
-                'etims_device_serial_number' => $response->RESULT['info']['cuSerialNo'] ?? '',
-                'etims_cmc_key' => $response->RESULT['info']['cmcKey'] ?? '',
-                'etims_branch_code' => $response->RESULT['info']['bhfId'] ?? ''
-            ]);
-
-        return $response;
-    }
-    public static function initializeSupplierDevice(Branch $branch, Supplier $supplier)
-    {
-
-        $data = [
-            "tin" => $supplier->kra_pin,
-            "bhfId" => $supplier->etims_branch_code,
-            "dvcSrlNo" => $supplier->etims_device_serial_number,
-            "solution_type" => "OSU"
-        ];
-
-        $response = self::sendGuzzleRequest($branch, '/selectInitOsdcInfo', $data);
-        if ($response->RESULT['info']['cuSerialNo'] ?? null)
-            $supplier->update([
-                'etims_device_serial_number' => $response->RESULT['info']['cuSerialNo'] ?? '',
-                'etims_cmc_key' => $response->RESULT['info']['cmcKey'] ?? '',
-                'etims_branch_code' => $response->RESULT['info']['bhfId'] ?? '',
-              'etims_device_initialized' =>    isset($response->RESULT['info']['cmcKey']) ? 1 : null,
-
-            ]);
-
-        return $response;
-    }
-
-
-
     private static function sendGuzzleRequest(Branch $branch, $endPoint, $data, $method = 'POST')
     {
-        $baseUrl = app()->environment('production')    ? 'https://etims-api.kra.go.ke/etims-api'    : 'https://etims-api-sbx.kra.go.ke/etims-api';
-        $baseUrl = $branch->solution_type == 'vscu' ? env('ETIMS_VSCU_URL', 'http://localhost:8088') : $baseUrl;
         $client = new Client();
+        $baseUrl = env('SMART_INVOICE_VSDC_URL', 'http://46.224.127.208:5000/api/v1');
 
-
-        // Log::alert("ETIMS URL " . $baseUrl . $endPoint);
-        // $env =  env('APP_ENV', 'local');
-
-        if( $branch->solution_type == 'oscu' && config('app.env') !== 'production' )
-            $baseUrl = "https://etims-api-sbx.kra.go.ke/etims-api";
-
-        if ($branch->solution_type == 'vscu'):
             $cmcKey = $branch->cmc_key ? $branch->cmc_key : null;
-            $data["tin"] =  $branch->kra_pin;
+            $data["tpin"] =  $branch->kra_pin;
             $data["bhfId"] = $branch->branch_code;
-        else:
-            $cmcKey =  $branch->kra_pin != 'P051896935Z'   ? $branch->cmc_key : '7BAA41C580BA4B769B1E6BD03F0E42631C8FEEC4F93A493E9E68';
-        endif;
 
-        Log::alert($data);
+
         try {
-            Log::info("Calling eTIMS endpoint:  $endPoint");
+            Log::info("Calling vsdc endpoint:  $endPoint");
+            Log::info($data);
             $response = $client->request(
                 $method,
                 $baseUrl . $endPoint,
                 [
                     'json' => $data,
                     'headers' => [
-                        "tin" => $branch->kra_pin,
-                        "bhfId" => $branch->etims_branch_code,
-                        "cmckey" =>  $cmcKey,
-                        "Content-Type" => "application/json",
-                        "Accept" => "application/json",
+                        "tpin" => $branch->kra_pin,
+                        "bhfId" => $branch->branch_code,
+                        "cmckey" => $cmcKey,
+                        "Content-Type" => "application/json"
                     ],
                 ]
             );
 
             $response = json_decode($response->getBody(), true);
 
-            Log::info("Response:  " . json_encode($response));
+            Log::info("Response:  ".json_encode($response));
+
 
             return (object) $response;
         } catch (\Throwable $th) {
-            //     return $e;
-            Log::alert($th);
+                    //     return $e;
+                    Log::alert($th);
             return $th;
-        }
-    }
-    private static function sendRevereseInvoiceGuzzleRequest(Supplier $supplier, $endPoint, $data, $method = 'POST')
-    {
-        $baseUrl = app()->environment('production')    ? 'https://etims-api.kra.go.ke/etims-api'    : 'https://etims-api-sbx.kra.go.ke/etims-api';
 
-        $client = new Client();
-
-
-        // Log::alert("ETIMS URL " . $baseUrl . $endPoint);
-        // $env =  env('APP_ENV', 'local');
-
-        // Log::info([
-        //     'json' => $data,
-        //     'headers' => [
-        //         "tin" => $supplier->kra_pin,
-        //         "bhfId" => $supplier->etims_branch_code,
-        //         "cmckey" =>  $supplier->etims_cmc_key,
-        //         "Content-Type" => "application/json",
-        //         "Accept" => "application/json"
-        //     ]
-        // ]);
-        try {
-            Log::info("Calling eTIMS endpoint:  $endPoint");
-            $response = $client->request(
-                $method,
-                $baseUrl . $endPoint,
-                [
-                    'json' => $data,
-                    'headers' => [
-                        "tin" => $supplier->kra_pin,
-                        "bhfId" => $supplier->etims_branch_code,
-                        "cmckey" =>  $supplier->etims_cmc_key,
-                        "Content-Type" => "application/json",
-                        "Accept" => "application/json",
-                    ],
-                ]
-            );
-
-            $response = json_decode($response->getBody(), true);
-
-            // Log::info("Response:  " . json_encode($response));
-
-            return (object) $response;
-        } catch (\Throwable $th) {
-            //     return $e;
-            Log::alert($th);
-            return $th;
-        }
-    }
-    private static function initializeSupplierGuzzleRequest(Supplier $supplier, $endPoint, $data, $method = 'POST')
-    {
-        $baseUrl = app()->environment('production')    ? 'https://etims-api.kra.go.ke/etims-api'    : 'https://etims-api-sbx.kra.go.ke/etims-api';
-
-        $client = new Client();
-
-
-        // Log::alert("ETIMS URL " . $baseUrl . $endPoint);
-        // $env =  env('APP_ENV', 'local');
-
-
-        try {
-            Log::info("Calling eTIMS endpoint:  $endPoint");
-            $response = $client->request(
-                $method,
-                $baseUrl . $endPoint,
-                [
-                    'json' => $data,
-                    'headers' => [
-                        // "tin" => $supplier->kra_pin,
-                        // "bhfId" => $supplier->etims_branch_code,
-                        // "dvcSrlNo"=> $supplier->etims_device_serial_number,
-                        "Content-Type" => "application/json",
-                        "Accept" => "application/json",
-                    ],
-                ]
-            );
-
-            $response = json_decode($response->getBody(), true);
-
-            Log::info("Response:  " . json_encode($response));
-
-            return (object) $response;
-        } catch (\Throwable $th) {
-            //     return $e;
-            Log::alert($th);
-            return $th;
         }
     }
 
@@ -1413,7 +1141,6 @@ class ETIMSHelper
             $data = [
                 'code' => $item['cd'],
                 'name' => $item['cdNm'],
-                'description' => $item['cdDesc'],
             ];
             Country::updateOrCreate(['code' => $item['cd']], $data);
         endforeach;
@@ -1424,7 +1151,6 @@ class ETIMSHelper
             $data = [
                 'code' => $item['cd'],
                 'name' => $item['cdNm'],
-                'description' => $item['cdDesc'],
             ];
             RefundReason::updateOrCreate(['code' => $item['cd']], $data);
         endforeach;
@@ -1435,7 +1161,6 @@ class ETIMSHelper
             $data = [
                 'code' => $item['cd'],
                 'name' => $item['cdNm'],
-                'description' => $item['cdDesc'],
             ];
             Currency::updateOrCreate(['code' => $item['cd']], $data);
         endforeach;
@@ -1446,7 +1171,6 @@ class ETIMSHelper
             $data = [
                 'code' => $item['cd'],
                 'name' => $item['cdNm'],
-                'description' => $item['cdDesc'],
             ];
             Bank::updateOrCreate(['code' => $item['cd']], $data);
         endforeach;
@@ -1457,7 +1181,6 @@ class ETIMSHelper
             $data = [
                 'code' => $item['cd'],
                 'name' => $item['cdNm'],
-                'description' => $item['cdDesc'],
             ];
             Locale::updateOrCreate(['code' => $item['cd']], $data);
         endforeach;
@@ -1468,7 +1191,6 @@ class ETIMSHelper
             $data = [
                 'code' => $item['cd'],
                 'name' => $item['cdNm'],
-                'description' => $item['cdDesc'],
                 'rate' => $item['userDfnCd1'],
             ];
             TaxCode::updateOrCreate(['code' => $item['cd']], $data);
@@ -1488,9 +1210,9 @@ class ETIMSHelper
                 "pkgUnitCd" =>  $item->packaging_unit_code,
                 "pkg" => $item->packaging_unit,
                 "qtyUnitCd" => $item->quantity_unit_code,
-                "qty" => $item->quantity ? round($item->quantity,2) : $item->quantity,
-                "prc" => $item->unit_price ? round($item->unit_price,2) : $item->unit_price,
-                "splyAmt" => $item->supply_price ? round($item->supply_price,2) : $item->supply_price,2,
+                "qty" => $item->quantity,
+                "prc" => $item->unit_price,
+                "splyAmt" => $item->supply_price,
                 "dcRt" => $item->discount_rate ? round($item->discount_rate,2) :  0,
                 "dcAmt" => $item->discount_amount ? round($item->discount_amount,2) :  0,
                 "totDcAmt" => $item->total_discount_amount ? round($item->total_discount_amount,2) : 0,
@@ -1511,7 +1233,7 @@ class ETIMSHelper
 
         foreach ($etimsPurchase->items as $item) :
 
-            if ($item->item_id != $mappedProduct->id) continue;
+            if($item->item_id != $mappedProduct->id) continue;
 
             $arr = [
                 "itemSeq" => $item->item_sequence_number,
@@ -1566,19 +1288,19 @@ class ETIMSHelper
                 'pkgUnitCd' => $item->packaging_unit_code,
                 'pkg' => $item->packaging_unit,
                 'qtyUnitCd' => $item->quantity_unit_code,
-                'qty' => $item->quantity ? round($item->quantity,2) : $item->quantity,
-                'prc' => $item->unit_price ? round($item->unit_price,2) : $item->unit_price,
-                'splyAmt' => $item->supply_amount ? round($item->supply_amount, 2) : $item->supply_amount,
-                'dcRt' => $item->discount_rate ? round($item->discount_rate, 2) : $item->discount_rate,
-                'dcAmt' => $item->discount_amount ? round($item->discount_amount, 2) : $item->discount_amount,
+                'qty' => $item->quantity,
+                'prc' => $item->unit_price ? round($item->unit_price) : $item->unit_price,
+                'splyAmt' => $item->supply_amount ? round($item->supply_amount,2) : $item->supply_amount,
+                'dcRt' => $item->discount_rate ? round($item->discount_rate,2) : $item->discount_rate,
+                'dcAmt' => $item->discount_amount ? round($item->discount_amount,2) : $item->discount_amount,
                 'isrccCd' => $item->insurance_company_code,
                 'isrccNm' => $item->insurance_company_name,
-                'isrcRt' => $item->insurance_rate ? round($item->insurance_rate, 2) : $item->insurance_rate,
-                'isrcAmt' => $item->insurance_amount ? round($item->insurance_amount, 2) : $item->insurance_amount,
+                'isrcRt' => $item->insurance_rate ? round($item->insurance_rate,2) : $item->insurance_rate,
+                'isrcAmt' => $item->insurance_amount ? round($item->insurance_amount,2) : $item->insurance_amount,
                 'taxTyCd' => $item->tax_type_code,
-                'taxblAmt' => $item->taxable_amount ? round($item->taxable_amount, 2) : $item->taxable_amount,
-                'taxAmt' => $item->tax_amount ? round($item->tax_amount, 2) : $item->tax_amount,
-                'totAmt' => $item->total_amount ? round($item->total_amount, 2) : $item->total_amount,
+                'taxblAmt' => $item->taxable_amount ? round($item->taxable_amount,2) : $item->taxable_amount,
+                'taxAmt' => $item->tax_amount ? round($item->tax_amount,2) : $item->tax_amount,
+                'totAmt' => $item->total_amount ? round($item->total_amount,2) : $item->total_amount,
             ];
 
             $count++;
@@ -1607,7 +1329,7 @@ class ETIMSHelper
 
         $branch = $invoice->branch;
 
-        if ($branch->solution_type == 'vscu'):
+        if( $branch->solution_type == 'vsdc' ):
             $data = [
                 'etims_current_reciept_number' => isset($response->data['rcptNo']) ? $response->data['rcptNo'] : null,
                 'etims_total_reciept_number' => isset($response->data['totRcptNo']) ? $response->data['totRcptNo'] : null,
@@ -1620,7 +1342,7 @@ class ETIMSHelper
                 'sales_control_unit_id' => isset($response->data['sdcId']) ? $response->data['sdcId'] : null,
                 'manufacturer_registration_code' => isset($response->data['mrcNo']) ? $response->data['mrcNo'] : null,
                 "synced_at" =>  now(),
-                "synced_to_etims" => 1,
+                "synced_to_etims" =>1,
             ];
         else:
             $resObj = (object) $response->data;
@@ -1636,14 +1358,14 @@ class ETIMSHelper
                 'sales_control_unit_id' => isset($resObj->sdcId) ? $resObj->sdcId : null,
                 'manufacturer_registration_code' => isset($resObj->mrcNo) ? $resObj->mrcNo : null,
                 "synced_at" =>  now(),
-                "synced_to_etims" => 1,
+                "synced_to_etims" =>1,
             ];
         endif;
 
-        self::updateInvoiceData($invoice, $data);
+        self::updateInvoiceData($invoice,$data);
     }
 
-    private static function updateInvoiceData(Invoice $invoice, array $data)
+    private static function updateInvoiceData(Invoice $invoice, Array $data)
     {
         return $invoice->update($data);
     }
