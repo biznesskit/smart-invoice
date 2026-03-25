@@ -36,8 +36,7 @@ class ValidateTenantRequest extends FormRequest
             'name' => 'required|string',
             'business_type' => 'required|string',
             'tracking_number' => 'nullable|string',
-            'kra_pin' => 'required|string|unique:landlord.tenants|min:11|max:11|regex:/^[A-Z]{1}[0-9]{9}[A-Z]{1}+$/',
-            'kra_pin' => [    'required',    'string',    'unique:landlord.tenants',    'regex:/^[A-Z][0-9]{9}[A-Z]$/'],
+            'kra_pin' => 'required|string|unique:landlord.tenants|min:10|max:10',
 
             'referral_code' => 'nullable|string',
             'business_phone'=>'nullable|string|unique:landlord.tenants,business_phone',

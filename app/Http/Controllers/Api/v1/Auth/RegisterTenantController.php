@@ -24,7 +24,7 @@ class RegisterTenantController extends Controller
     public static function account_exists(Request $request)
     {
         $request->validate([
-            'kra_pin' => 'required|string|min:11|max:11|regex:/^[A-Z]{1}[0-9]{9}[A-Z]{1}+$/',
+            'kra_pin' => 'required|string|min:10|max:10',
         ]);
 
         $tenant = Tenant::where('kra_pin',$request->kra_pin)->first();
@@ -111,7 +111,7 @@ class RegisterTenantController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Business account created',
-            'data' => collect($tenant)->only([        
+            'data' => collect($tenant)->only([
         'name',
         'business_type',
         'tracking_number',
@@ -186,11 +186,11 @@ class RegisterTenantController extends Controller
         $company = $branch->company;
 
         $company->update([
-            'kra_pin'=> $tenant->kra_pin         
+            'kra_pin'=> $tenant->kra_pin
         ]);
         $branch->update([
             'kra_pin'=> $tenant->kra_pin ,
-            'solution_type'=> '04'       
+            'solution_type'=> '04'
         ]);
 
         $user = NewTenantAccount::createUser($data, $branch);
@@ -205,14 +205,14 @@ class RegisterTenantController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Record  created',
-            'data' => collect($user)->only([                    
+            'data' => collect($user)->only([
                             'first_name' ,
                             'last_name' ,
                             'email' ,
                             'phone' ,
-                            'username' 
+                            'username'
                     ]),
-         'token' => $token                  
+         'token' => $token
         ], 201);
     }
 

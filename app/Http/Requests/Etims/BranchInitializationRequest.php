@@ -24,9 +24,9 @@ class BranchInitializationRequest extends FormRequest
     public function rules()
     {
         return [
-            'kra_pin'=> 'nullable|string|min:11|max:11|regex:/^[A-Z]{1}[0-9]{9}[A-Z]{1}+$/', // tobe deprecated
-            'company_kra_pin'=> 'nullable|string|min:11|max:11|regex:/^[A-Z]{1}[0-9]{9}[A-Z]{1}+$/',
-            'branch_code'=>'numeric|required|digits:2',
+            'kra_pin'=> 'nullable|string|min:10|max:10', // tobe deprecated
+            'company_kra_pin'=> 'nullable|string|min:10|max:10',
+            'branch_code'=>'numeric|required|digits:3',
             'device_serial_number'=>'string|required',
             'solution_type'=>'string|nullable',
         ];
