@@ -239,11 +239,11 @@ class ETIMSHelper
         $data = [
             "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
-            "custNo" => str_starts_with($customer->phone, '260') ? substr($customer->phone, 3) : $customer->phone,
+            "custNo" => str_starts_with($customer->phone, '260') ? '0' . substr($customer->phone, 3) : $customer->phone,
             "custTpin" => $customer->kra_pin,
             "custNm" => $customer->name,
             "adrs" => $customer->location,
-            "telNo" => $customer->phone,
+            "telNo" => str_starts_with($customer->phone, '260') ? '0' . substr($customer->phone, 3) : $customer->phone,
             "email" => $customer->email,
             "faxNo" => null,
             "useYn" => "Y",

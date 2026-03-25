@@ -30,7 +30,7 @@ class SaveBranchCustomerRequest extends FormRequest
     {
         return [
             'tracking_number' => 'required|string|unique:customers',
-            'kra_pin' => 'required|string|unique:customers|min:11|max:11|regex:/^[A-Z]{1}[0-9]{9}[A-Z]{1}+$/',
+            'kra_pin' => 'required|string|unique:customers|min:10|max:10',
             'name' => 'required|string|max:60',
             'address'=> 'nullable|string|max:300',
             'phone'=> 'nullable|numeric|string|maxDigits:20',
