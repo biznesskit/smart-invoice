@@ -656,12 +656,16 @@ class ETIMSHelper
             $data = [
                 "tpin"    => $branch->kra_pin,
                 "bhfId"  => $branch->branch_code,
-                "itemCd" => $stockMaster->item_code,
-                "rsdQty" => $stockMaster->remaining_quantity,
                 "regrId" => $staff->id,
                 "regrNm" => ucwords($staff->first_name),
                 "modrId" => $staff->id,
-                "modrNm" => ucwords($staff->first_name)
+                "modrNm" => ucwords($staff->first_name),
+                "stockItemList" => [
+                    [
+                        "itemCd" => $stockMaster->item_code,
+                        "rsdQty" =>  $stockMaster->remaining_quantity
+                    ]
+                ]
             ];
 
             // Log::info("Transmitting stock master: $stockMaster->id ...");
@@ -821,15 +825,18 @@ class ETIMSHelper
             "tpin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "trdInvcNo" => $invoice->purchase_invoice_number,
-            "invcNo" =>  $env == 'local' && $branch->kra_pin == 'P051896935Z' ? time() : $invoice->invoice_number,
+            "cisInvcNo" =>  $invoice->invoice_number,
             "orgInvcNo" => $invoice->original_invoice_number,
 
             "custTpin" => $originalcustomerKraPIN ? $originalcustomerKraPIN : $customerKraPIN,
             "custNm" => $originalcustomerName ? $originalcustomerName : $customerName,
 
+            "saleCtyCd" => $invoice->sales_type_code,
             "salesTyCd" => $invoice->sales_type_code,
             "rcptTyCd" => $invoice->receipt_type_code,
-            "pmtTyCd" => $invoice->payment_type_cAPP_ENVode,
+            "pmtTyCd" => $invoice->payment_type_code,
+            "currencyTyCd" => "ZMW",
+            "exchangeRt" => 0.0,
             "salesSttsCd" => $invoice->sale_status_code,
             "cfmDt" => $invoice->validated_date,
             "salesDt" => $invoice->sale_date,
@@ -1220,6 +1227,7 @@ class ETIMSHelper
                 "taxblAmt" => round($item->taxable_amount, 2),
                 "taxAmt" => round($item->tax_amount, 2),
                 "totAmt" => round($item->total_amount, 2),
+                "vatCatCd" => $item->tax_type_code,
             ];
 
             array_push($data, $arr);
