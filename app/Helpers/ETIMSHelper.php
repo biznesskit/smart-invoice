@@ -195,7 +195,7 @@ class ETIMSHelper
     {
         $date = Carbon::today()->subMonth($subMonths)->format('Ymd');
 
-        $data = ["lastReqDt" => $date . "000000",'custmTin'=>'A000000000P'];
+        $data = ["lastReqDt" => $date . "000000",'custmTpin'=>'2694010404'];
 
         $branch = Branch::first();
 
