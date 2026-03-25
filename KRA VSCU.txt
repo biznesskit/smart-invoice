@@ -1,0 +1,7 @@
+[2025-08-15 10:22:43] local.INFO: Calling eTIMS endpoint:  /initializer/selectInitInfo
+[2025-08-15 10:22:43] local.INFO: array (
+  'tin' => 'P051896935Z',
+  'bhfId' => '05',
+  'dvcSrlNo' => 'BIZKIT_2025_08_13',
+)
+[2025-08-15 10:22:45] local.INFO: Response:  {"resultCd":"000","resultMsg":"Successful","resultDt":"20250815102245","data":{"info":{"tin":"P051896935Z","taxprNm":"PRIZED AI LIMITED","bsnsActv":"Others","bhfId":"05","bhfNm":"Headquarter","bhfOpenDt":"20250813","prvncNm":"Nairobi","dstrtNm":"Embakasi District","sctrNm":"Embakasi","locDesc":null,"hqYn":"Y","mgrNm":"PRIZED AI LIMITED","mgrTelNo":"0722768577","mgrEmail":"p_kimani@rocketmail.com","sdcId":null,"mrcNo":null,"dvcId":"446018","intrlKey":null,"signKey":null,"cmcKey":null,"lastPchsInvcNo":0,"lastSaleRcptNo":null,"lastInvcNo":null,"lastSaleInvcNo":0,"lastTrainInvcNo":null,"lastProfrmInvcNo":null,"lastCopyInvcNo":null,"vatTyCd":"1"}}}
