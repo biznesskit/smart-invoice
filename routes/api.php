@@ -32,32 +32,12 @@ Route::get('health-check', function () {
     ], 200);
 });
 
-Route::post('/pts', function (Request $request) {// for testing PTS incoming packets
-    Log::info('PTS Incoming', $request->all());
-
-    $packets = $request->input('Packets', []);
-
-    $responses = [];
-
-    foreach ($packets as $packet) {
-        $responses[] = [
-            "Id" => $packet['Id'],
-            "Type" => $packet['Type'],
-            "Message" => "OK"
-        ];
-    }
-
-    return response()->json([
-        "Protocol" => "jsonPTS",
-        "Packets" => $responses
-    ]);
-});
-
 Route::post('account-exists', [RegisterTenantController::class, 'account_exists']);
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::resource('branch', BranchController::class);
     Route::get('get-item-classification-list', [BranchController::class, 'get_item_classification_list']);
+    Route::get('get-tax-codes', [BranchController::class, 'get_tax_codes']);
     Route::patch('patch-branch/{tracking_number}', [BranchController::class, 'patch_branch']);
     Route::put('update-branch/{tracking_number}', [BranchController::class, 'update_branch']);
     Route::resource('purchase', PurchaseController::class);

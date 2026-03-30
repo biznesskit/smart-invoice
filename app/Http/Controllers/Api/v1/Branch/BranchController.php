@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\v1\Branch;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Landlord\ItemClassification;
+use App\Models\Landlord\TaxCode;
 use Illuminate\Http\Request;
 
 class BranchController extends Controller
@@ -58,6 +59,23 @@ class BranchController extends Controller
         //
     }
 
+    public function get_tax_codes(Request $request)
+    {
+
+        $searchString = $request->search_string;
+        $perPage = $request->perPage ? ($request->perPage !== 'null' ? $request->perPage : env('API_PAGINATION', 20)) : env('API_PAGINATION', 20);
+
+        $codes = TaxCode::when($searchString, function ($query)  use ($searchString) {
+            return $query->where('name', 'like', '%' . $searchString . '%');
+        })
+        ->paginate($perPage);
+
+         return response()->json([
+            'success' => true,
+            'message' => 'Tax code list returned',
+            'data' => $codes
+        ], 200);
+    }
     public function get_item_classification_list(Request $request)
     {
 
@@ -71,7 +89,7 @@ class BranchController extends Controller
 
          return response()->json([
             'success' => true,
-            'message' => 'Etims item code list returned',
+            'message' => 'Item code list returned',
             'data' => $codes
         ], 200);
     }
