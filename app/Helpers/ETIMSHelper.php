@@ -811,7 +811,14 @@ class ETIMSHelper
         $customer = $invoice->customer;
         $itemsList = self::generateInvoiceItemList($invoice);
 
-        $originalInvoice = Invoice::find($invoice->original_invoice_id);
+        $originalInvoice = Invoice::where('invoice_number',$invoice->original_invoice_number)->first();
+
+        if($originalInvoice){
+            Log::info('Original invoice found for invoice number: ' . $invoice->invoice_number);
+            Log::info($originalInvoice->id);
+            Log::info($originalInvoice->sales_control_unit_id);
+
+        }
 
         $originalcustomerKraPIN = $originalInvoice ? $originalInvoice->customer_kra_pin : null;
         $originalcustomerName = $originalInvoice ? $originalInvoice->customer_name : null;
@@ -830,7 +837,7 @@ class ETIMSHelper
 
             "custTpin" => $originalcustomerKraPIN ? $originalcustomerKraPIN : $customerKraPIN,
             "custNm" => $originalcustomerName ? $originalcustomerName : $customerName,
-            "orgSdcId" => $originalInvoice ? $originalInvoice->organisation_sales_device_id : null,
+            "orgSdcId" => $originalInvoice ? $originalInvoice->sales_control_unit_id  : null,
             "saleCtyCd" => $invoice->sales_type_code,
             "salesTyCd" => $invoice->sales_type_code,
             "rcptTyCd" => $invoice->receipt_type_code,
