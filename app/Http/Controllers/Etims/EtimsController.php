@@ -322,6 +322,7 @@ class EtimsController extends Controller
 
         ], 404);
 
+        Log::info(json_encode($data));
 
         $item = $branch->items()->create($data);
 
@@ -558,7 +559,6 @@ class EtimsController extends Controller
 
         $invoice->jobQueueSequence()->create(['created_by' => $staff->id]);
         Utilities::recordStockIO($branch, $released_type_code, $original_stored_and_released_number, $request->total_taxable_amount, $request->total_tax_amount, $request->total_amount, $invoice->items->toArray(), $staff, $request->stock_tracking_number, $customer, $invoice);
-        return $invoice;
 
         // });
 
@@ -643,7 +643,6 @@ class EtimsController extends Controller
 
         $invoice->jobQueueSequence()->create(['created_by' => $staff->id]);
         Utilities::recordStockIO($branch, $released_type_code, $original_stored_and_released_number, $request->total_taxable_amount, $request->total_tax_amount, $request->total_amount, $invoice->items->toArray(), $staff, $request->stock_tracking_number, $customer, $invoice);
-        return $invoice;
 
         // });
 

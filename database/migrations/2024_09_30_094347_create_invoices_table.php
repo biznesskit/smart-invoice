@@ -64,6 +64,7 @@ return new class extends Migration
             $table->double('total_amount')->required();
             $table->string('purchase_acceptance_status')->required()->default('Y');
             $table->string('remark')->nullable();
+            $table->string('organisation_sales_device_id')->nullable();
             $table->timestamp('synced_at')->nullable();
             $table->timestamps(6);
         });

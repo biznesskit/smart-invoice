@@ -830,13 +830,13 @@ class ETIMSHelper
 
             "custTpin" => $originalcustomerKraPIN ? $originalcustomerKraPIN : $customerKraPIN,
             "custNm" => $originalcustomerName ? $originalcustomerName : $customerName,
-
+            "orgSdcId" => $originalInvoice ? $originalInvoice->organisation_sales_device_id : null,
             "saleCtyCd" => $invoice->sales_type_code,
             "salesTyCd" => $invoice->sales_type_code,
             "rcptTyCd" => $invoice->receipt_type_code,
             "pmtTyCd" => $invoice->payment_type_code,
             "currencyTyCd" => "ZMW",
-            "exchangeRt" => 0.0,
+            "exchangeRt" => 1,
             "salesSttsCd" => $invoice->sale_status_code,
             "cfmDt" => $invoice->validated_date,
             "salesDt" => $invoice->sale_date,
@@ -1341,37 +1341,42 @@ class ETIMSHelper
 
         if( $branch->solution_type == 'vsdc' ):
             $data = [
-                'etims_current_reciept_number' => isset($response->data['rcptNo']) ? $response->data['rcptNo'] : null,
-                'etims_total_reciept_number' => isset($response->data['totRcptNo']) ? $response->data['totRcptNo'] : null,
-                'etims_internal_data' => isset($response->data['intrlData']) ? $response->data['intrlData'] : null,
-                'etims_reciept_signiture' => isset($response->data['rcptSign']) ? $response->data['rcptSign'] : null,
-                'etims_control_unit_date_time' => isset($response->data['vsdcRcptPbctDate']) ? $response->data['vsdcRcptPbctDate'] : null,
-                'etims_control_unit_serial_number' => isset($response->data['totRcptNo']) ? $response->data['totRcptNo'] : null,
-                'etims_control_unit_invoice_number' => isset($response->data['rcptNo']) ? $response->data['rcptNo'] : null,
-                'etims_receipt_reference_number' => isset($response->data['rcptSign']) ? $response->data['rcptSign'] : null,
+                'current_reciept_number' => isset($response->data['rcptNo']) ? $response->data['rcptNo'] : null,
+                'total_reciept_number' => isset($response->data['totRcptNo']) ? $response->data['totRcptNo'] : null,
+                'qr_code' => isset($response->data['qrCodeUrl']) ? $response->data['qrCodeUrl'] : null,
+                'internal_data' => isset($response->data['intrlData']) ? $response->data['intrlData'] : null,
+                'reciept_signiture' => isset($response->data['rcptSign']) ? $response->data['rcptSign'] : null,
+                'control_unit_date_time' => isset($response->data['vsdcRcptPbctDate']) ? $response->data['vsdcRcptPbctDate'] : null,
+                'control_unit_serial_number' => isset($response->data['totRcptNo']) ? $response->data['totRcptNo'] : null,
+                'control_unit_invoice_number' => isset($response->data['rcptNo']) ? $response->data['rcptNo'] : null,
+                'receipt_reference_number' => isset($response->data['rcptSign']) ? $response->data['rcptSign'] : null,
                 'sales_control_unit_id' => isset($response->data['sdcId']) ? $response->data['sdcId'] : null,
                 'manufacturer_registration_code' => isset($response->data['mrcNo']) ? $response->data['mrcNo'] : null,
-                "synced_at" =>  now(),
+                // "synced_at" =>  now(),
                 "synced_to_etims" =>1,
             ];
+            Log::alert($data);
         else:
             $resObj = (object) $response->data;
             $data = [
-                'etims_current_reciept_number' => $resObj->curRcptNo,
-                'etims_total_reciept_number' => $resObj->totRcptNo,
-                'etims_internal_data' => $resObj->intrlData,
-                'etims_reciept_signiture' => $resObj->rcptSign,
-                'etims_control_unit_date_time' => $resObj->sdcDateTime,
-                'etims_control_unit_serial_number' => $resObj->totRcptNo,
-                'etims_control_unit_invoice_number' => $resObj->curRcptNo,
-                'etims_receipt_reference_number' => $resObj->rcptSign,
+                'current_reciept_number' => $resObj->curRcptNo,
+                'total_reciept_number' => $resObj->totRcptNo,
+                'qr_code' => isset($response->data['qrCodeUrl']) ? $response->data['qrCodeUrl'] : null,
+                'internal_data' => $resObj->intrlData,
+                'reciept_signiture' => $resObj->rcptSign,
+                'control_unit_date_time' => $resObj->sdcDateTime,
+                'control_unit_serial_number' => $resObj->totRcptNo,
+                'control_unit_invoice_number' => $resObj->curRcptNo,
+                'receipt_reference_number' => $resObj->rcptSign,
                 'sales_control_unit_id' => isset($resObj->sdcId) ? $resObj->sdcId : null,
+                'organisation_sales_device_id' => isset($resObj->sdcId) ? $resObj->sdcId : null,
                 'manufacturer_registration_code' => isset($resObj->mrcNo) ? $resObj->mrcNo : null,
                 "synced_at" =>  now(),
                 "synced_to_etims" =>1,
             ];
         endif;
 
+        Log::alert("Updated invoice with receipt data: ".json_encode($invoice));
         self::updateInvoiceData($invoice,$data);
     }
 
