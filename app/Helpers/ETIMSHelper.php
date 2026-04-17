@@ -833,6 +833,7 @@ class ETIMSHelper
             "bhfId" => $branch->branch_code,
             "trdInvcNo" => $invoice->purchase_invoice_number,
             "cisInvcNo" =>  $invoice->invoice_number,
+            "destnCountryCd" => $invoice->taxable_amount_C1 > 0 ? "ZA" : NULL,
             "orgInvcNo" => $invoice->original_invoice_number,
 
             "custTpin" => $originalcustomerKraPIN ? $originalcustomerKraPIN : $customerKraPIN,
@@ -853,24 +854,36 @@ class ETIMSHelper
             "rfdDt" => $invoice->credit_note_date,
             "rfdRsnCd" => $invoice->credit_note_reason_code,
             "totItemCnt" => $invoice->items()->count(),
-            "taxblAmtA" => sprintf("%0.4f", $invoice->taxable_amount_A),
-            "taxblAmtB" => sprintf("%0.4f", $invoice->taxable_amount_B),
-            "taxblAmtC" => sprintf("%0.4f", $invoice->taxable_amount_C),
-            "taxblAmtD" => sprintf("%0.4f", $invoice->taxable_amount_D),
-            "taxblAmtE" => sprintf("%0.4f", $invoice->taxable_amount_E),
+            "taxblAmtA" => sprintf("%0.2f", $invoice->taxable_amount_A),
+            "taxblAmtB" => sprintf("%0.2f", $invoice->taxable_amount_B),
+            "taxblAmtC1" => sprintf("%0.2f", $invoice->taxable_amount_C1),
+            "taxblAmtC2" => sprintf("%0.2f", $invoice->taxable_amount_C2),
+            "taxblAmtC3" => sprintf("%0.2f", $invoice->taxable_amount_C3),
+            "taxblAmtD" => sprintf("%0.2f", $invoice->taxable_amount_D),
+            "taxblAmtE" => sprintf("%0.2f", $invoice->taxable_amount_E),
+            "taxblAmtRvat" => sprintf("%0.2f", $invoice->taxable_amount_Rvat),
+            "taxblAmtTot" => sprintf("%0.2f", $invoice->taxable_amount_Tot),
             "taxRtA" => $invoice->tax_rate_A,
             "taxRtB" => $invoice->tax_rate_B,
-            "taxRtC" => $invoice->tax_rate_C,
+            "taxRtC1" => $invoice->tax_rate_C1,
+            "taxRtC2" => $invoice->tax_rate_C2,
+            "taxRtC3" => $invoice->tax_rate_C3,
             "taxRtD" => $invoice->tax_rate_D,
             "taxRtE" => $invoice->tax_rate_E,
-            "taxAmtA" => sprintf("%0.4f", $invoice->tax_amount_A),
-            "taxAmtB" => sprintf("%0.4f", $invoice->tax_amount_B),
-            "taxAmtC" => sprintf("%0.4f", $invoice->tax_amount_C),
-            "taxAmtD" => sprintf("%0.4f", $invoice->tax_amount_D),
-            "taxAmtE" => sprintf("%0.4f", $invoice->tax_amount_E),
-            "totTaxblAmt" => sprintf("%0.4f", $invoice->total_taxable_amount),
-            "totTaxAmt" => sprintf("%0.4f", $invoice->total_tax_amount),
-            "totAmt" => sprintf("%0.4f", $invoice->total_amount),
+            "taxRtRvat" => $invoice->tax_rate_Rvat,
+            "taxRtTot" => $invoice->tax_rate_Tot,
+            "taxAmtA" => sprintf("%0.2f", $invoice->tax_amount_A),
+            "taxAmtB" => sprintf("%0.2f", $invoice->tax_amount_B),
+            "taxAmtC1" => sprintf("%0.2f", $invoice->tax_amount_C1),
+            "taxAmtC2" => sprintf("%0.2f", $invoice->tax_amount_C2),
+            "taxAmtC3" => sprintf("%0.2f", $invoice->tax_amount_C3),
+            "taxAmtD" => sprintf("%0.2f", $invoice->tax_amount_D),
+            "taxAmtRvat" => sprintf("%0.2f", $invoice->tax_amount_Rvat),
+            "taxAmtE" => sprintf("%0.2f", $invoice->tax_amount_E),
+            "taxAmtTot" => sprintf("%0.2f", $invoice->tax_amount_Tot),
+            "totTaxblAmt" => sprintf("%0.2f", $invoice->total_taxable_amount),
+            "totTaxAmt" => sprintf("%0.2f", $invoice->total_tax_amount),
+            "totAmt" => sprintf("%0.2f", $invoice->total_amount),
             "prchrAcptcYn" => $invoice->purchase_acceptance_status, // purchase accept yes(Y)/ no(N)
             "remark" => $invoice->remark,
             "regrId" => $staff->id,
@@ -889,11 +902,6 @@ class ETIMSHelper
             ],
             "itemList" =>  $itemsList,
         ];
-        // Log::info('Transmitting invoice...');
-
-        //sometimes etims will timeout so no response to even inspect.
-        // the check should be inside try catch block and mark job as failed in the catch block
-
 
         try {
             //code...
@@ -1078,7 +1086,7 @@ class ETIMSHelper
     private static function sendGuzzleRequest(Branch $branch, $endPoint, $data, $method = 'POST')
     {
         $client = new Client();
-        $baseUrl = env('SMART_INVOICE_VSDC_URL', 'http://46.224.127.208:5000/api/v1');
+        $baseUrl = env('SMART_INVOICE_VSDC_URL', 'http://46.224.127.208:8080/VSDC');
 
             $cmcKey = $branch->cmc_key ? $branch->cmc_key : null;
             $data["tpin"] =  $branch->kra_pin;
@@ -1086,7 +1094,7 @@ class ETIMSHelper
 
 
         try {
-            Log::info("Calling vsdc endpoint:  $endPoint");
+            Log::info("Calling vsdc endpoint:  $baseUrl$endPoint");
             Log::info($data);
             $response = $client->request(
                 $method,
@@ -1227,13 +1235,13 @@ class ETIMSHelper
                 "qty" => $item->quantity,
                 "prc" => $item->unit_price,
                 "splyAmt" => $item->supply_price,
-                "dcRt" => $item->discount_rate ? sprintf("%0.4f", $item->discount_rate) :  0,
-                "dcAmt" => $item->discount_amount ? sprintf("%0.4f", $item->discount_amount) :  0,
-                "totDcAmt" => $item->total_discount_amount ? sprintf("%0.4f", $item->total_discount_amount) : 0,
+                "dcRt" => $item->discount_rate ? sprintf("%0.2f", $item->discount_rate) :  0,
+                "dcAmt" => $item->discount_amount ? sprintf("%0.2f", $item->discount_amount) :  0,
+                "totDcAmt" => $item->total_discount_amount ? sprintf("%0.2f", $item->total_discount_amount) : 0,
                 "taxTyCd" => $item->tax_type_code,
-                "taxblAmt" => sprintf("%0.4f", $item->taxable_amount),
-                "taxAmt" => sprintf("%0.4f", $item->tax_amount),
-                "totAmt" => sprintf("%0.4f", $item->total_amount),
+                "taxblAmt" => sprintf("%0.2f", $item->taxable_amount),
+                "taxAmt" => sprintf("%0.2f", $item->tax_amount),
+                "totAmt" => sprintf("%0.2f", $item->total_amount),
                 "vatCatCd" => $item->tax_type_code,
             ];
 
@@ -1304,20 +1312,21 @@ class ETIMSHelper
                 'pkg' => $item->packaging_unit,
                 'qtyUnitCd' => $item->quantity_unit_code,
                 'qty' => $item->quantity,
-                'prc' => $item->unit_price ? sprintf("%0.4f", $item->unit_price) : $item->unit_price,
-                'splyAmt' => $item->supply_amount ? sprintf("%0.4f", $item->supply_amount) : $item->supply_amount,
-                'dcRt' => $item->discount_rate ? sprintf("%0.4f", $item->discount_rate) : $item->discount_rate,
-                'dcAmt' => $item->discount_amount ? sprintf("%0.4f", $item->discount_amount) : $item->discount_amount,
+                'prc' => $item->unit_price ? sprintf("%0.2f", $item->unit_price) : $item->unit_price,
+                'splyAmt' => $item->supply_amount ? sprintf("%0.2f", $item->supply_amount) : $item->supply_amount,
+                'dcRt' => $item->discount_rate ? sprintf("%0.2f", $item->discount_rate) : $item->discount_rate,
+                'dcAmt' => $item->discount_amount ? sprintf("%0.2f", $item->discount_amount) : $item->discount_amount,
                 'isrccCd' => $item->insurance_company_code,
                 'isrccNm' => $item->insurance_company_name,
-                'isrcRt' => $item->insurance_rate ? sprintf("%0.4f", $item->insurance_rate) : $item->insurance_rate,
-                'isrcAmt' => $item->insurance_amount ? sprintf("%0.4f", $item->insurance_amount) : $item->insurance_amount,
-                'taxTyCd' => $item->tax_type_code,
-                'taxblAmt' => $item->taxable_amount ? sprintf("%0.4f", $item->taxable_amount) : $item->taxable_amount,
-                'vatTaxblAmt' => $item->taxable_amount ? sprintf("%0.4f", $item->taxable_amount) : $item->taxable_amount,
-                'taxAmt' => $item->tax_amount ? sprintf("%0.4f", $item->tax_amount) : $item->tax_amount,
-                'vatAmt' => $item->tax_amount ? sprintf("%0.4f", $item->tax_amount) : $item->tax_amount,
-                'totAmt' => $item->total_amount ? sprintf("%0.4f", $item->total_amount) : $item->total_amount,
+                'isrcRt' => $item->insurance_rate ? sprintf("%0.2f", $item->insurance_rate) : $item->insurance_rate,
+                'isrcAmt' => $item->insurance_amount ? sprintf("%0.2f", $item->insurance_amount) : $item->insurance_amount,
+                'vatCatCd' => $item->tax_type_code,
+                'taxblAmt' => $item->taxable_amount ? sprintf("%0.2f", $item->taxable_amount) : $item->taxable_amount,
+                'vatTaxblAmt' => $item->taxable_amount ? sprintf("%0.2f", $item->taxable_amount) : $item->taxable_amount,
+                'taxAmt' => $item->tax_amount ? sprintf("%0.2f", $item->tax_amount) : $item->tax_amount,
+                'vatAmt' => $item->tax_amount ? sprintf("%0.2f", $item->tax_amount) : $item->tax_amount,
+                'totAmt' => $item->total_amount ? sprintf("%0.2f", $item->total_amount) : $item->total_amount,
+                'rrp' => $item->total_amount && $item->tax_type_code == 'B' ? sprintf("%0.2f", $item->total_amount) : $item->total_amount,
             ];
 
             $count++;
