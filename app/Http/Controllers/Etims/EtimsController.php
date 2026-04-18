@@ -322,8 +322,8 @@ class EtimsController extends Controller
 
         ], 404);
 
-        Log::info(json_encode($data));
-
+        $data['packaging_unit_code'] = $data['type'] == 'service' ? 'BE' : $data['packaging_unit_code'];
+        $data['quantity_unit_code'] = $data['type'] == 'service' ? 'NO' : $data['quantity_unit_code'];
         $item = $branch->items()->create($data);
 
         $response = ETIMSHelper::saveItem($item, $branch,$request->user());
