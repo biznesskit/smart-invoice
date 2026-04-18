@@ -599,13 +599,14 @@ class EtimsController extends Controller
         //  $invoiceData['supplier_id'] = $supplier ? $supplier->id : null;
         // }
 
-        Log::info($invoiceData);
+        // Log::info($invoiceData);
 
         $originalInvoice = $branch->invoices()->where('invoice_number',$request->original_invoice_number)->first();
-        Log::info(json_encode($originalInvoice));
+        // Log::info(json_encode($originalInvoice));
          $invoiceData['customer_id'] = $originalInvoice ->customer_id;
          $invoiceData['customer_name'] = $originalInvoice ->customer_name;
          $invoiceData['customer_kra_pin'] = $originalInvoice ->customer_kra_pin;
+         $invoiceData['credit_note_reason_code'] = StandardTaxationCodes::sanitizeCreditNoteCode($request->credit_note_reason_code);
 
          $invoiceData['supplier_id'] = $originalInvoice->supplier_id;
          $invoiceData['supplier_name'] = $originalInvoice->supplier_name;

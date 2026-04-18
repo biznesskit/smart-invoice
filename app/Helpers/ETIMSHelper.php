@@ -1326,7 +1326,7 @@ class ETIMSHelper
                 'taxAmt' => $item->tax_amount ? sprintf("%0.2f", $item->tax_amount) : $item->tax_amount,
                 'vatAmt' => $item->tax_amount ? sprintf("%0.2f", $item->tax_amount) : $item->tax_amount,
                 'totAmt' => $item->total_amount ? sprintf("%0.2f", $item->total_amount) : $item->total_amount,
-                'rrp' => $item->unit_price && $item->tax_type_code == 'B' ? sprintf("%0.2f", $item->unit_price) : NULL,
+                'rrp' => $item->supply_amount && $item->tax_type_code == 'B' ? sprintf("%0.2f", $item->supply_amount / $item->quantity) : NULL,
             ];
 
             $count++;

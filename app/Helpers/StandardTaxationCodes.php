@@ -2,8 +2,9 @@
 namespace App\Helpers;
 
 use App\Models\Landlord\TaxCode;
+use App\Models\Landlord\RefundReason;
 
-class StandardTaxationCodes 
+class StandardTaxationCodes
 {
 
     public static function getCreditNoteReasons()
@@ -39,24 +40,24 @@ class StandardTaxationCodes
                 'reason' => 'raw_material_shortage',
                 'name' => 'raw material shortage'
             ],
-            ["code"=>'07','reason'=>'wrong_customer','name'=>'wrong customer pin'],
-            ["code"=>'08','reason'=>'wrong_customer','name'=>'wrong customer name'],
-            ["code"=>'09','reason'=>'wrong_price','name'=>'wrong amount/price'],
-            ["code"=>'10','reason'=>'wrong_quantity','name'=>'wrong quantity'],
-            ["code"=>'11','reason'=>'wrong_items','name'=>'wrong items'],
-            ["code"=>'12','reason' => 'wrong_tax_type', 'name'=>'wrong tax type'],
-            ["code"=>'13','reason' => 'other_reason','name'=>'other reason'],
+            ["code"=>'07','reason' => 'other_reason','name'=>'other reason'],
         ];
     }
 
     public static function getCreditNoteReasonCode($reason = 'damaged_goods')
     {
         if( $reason == 'expired' || $reason == 'other' ) $reason = 'damaged_goods';
-        
+
         foreach (self::getCreditNoteReasons() as $type)
             if ($reason == $type['reason']) return $type['code'];
 
 
+    }
+
+    public static function sanitizeCreditNoteCode($code)
+    {
+        $possibleCodes = RefundReason::pluck('code')->toArray();
+        return in_array($code, $possibleCodes) ? $code : '07';
     }
 
     public static function getImportItemStatuses()
@@ -90,7 +91,7 @@ class StandardTaxationCodes
             ['code' => '04', 'reason' => 'incoming_stock', 'name' => 'Stock Movement', 'description' => 'Incoming- Stock'],
             ['code' => '05', 'reason' => 'incoming_processing', 'name' => 'Processing', 'description' => 'Incoming -Processing'],
             ['code' => '06', 'reason' => 'incoming_adjustment','name' => 'Adjustment', 'description' => 'Incoming -Adjustment'],
-            
+
             ['code' => '11', 'reason' => 'outgoing_sale', 'name' => 'Sale', 'description' => 'Outgoing -Sale'],
             ['code' => '12', 'reason' => 'outgoing_return','name' => 'Return', 'description' => 'Outgoing- Return'],
             ['code' => '13', 'reason' => 'outgoing_stock_movement', 'name' => 'Stock Movement', 'description' => 'Outgoing- Stock Movement'],
@@ -105,7 +106,7 @@ class StandardTaxationCodes
         foreach (self::getStockInOutTypes() as $type)
             if ($reason == $type['reason']) return $type['code'];
 
-        
+
     }
 
     public static function getPurchaseReceiptTypes()
@@ -1507,17 +1508,17 @@ class StandardTaxationCodes
         ];
     }
 
-    
+
 
     public static function getTaxTypes()
     {
         $taxTypes = TaxCode::select('name','rate','code')->get();
         return count($taxTypes) ? $taxTypes :[
-            ["code"=>"A", "name"=> "A-Exempt","rate"=>"0"],	
-            ["code"=>"B", "name"=> "B-16.00%","rate"=>"16"],	
-            ["code"=>"C", "name" => "C-0%","rate"=>"0"],	
-            ["code"=>"D", "name" => "D- Non-VAT","rate"=>"0"],	
-            ["code"=>"E", "name" => "E-8%","rate"=>"0"],	
+            ["code"=>"A", "name"=> "A-Exempt","rate"=>"0"],
+            ["code"=>"B", "name"=> "B-16.00%","rate"=>"16"],
+            ["code"=>"C", "name" => "C-0%","rate"=>"0"],
+            ["code"=>"D", "name" => "D- Non-VAT","rate"=>"0"],
+            ["code"=>"E", "name" => "E-8%","rate"=>"0"],
         ];
     }
     public static function getTaxTypeRate($taxCode)
@@ -1531,16 +1532,16 @@ class StandardTaxationCodes
     public static function getTaxPayerStatuses()
     {
         return [
-            ["code"=>"A", "name"=> "Active"],	
-            ["code"=>"D", "name" => "Inactive"],	
+            ["code"=>"A", "name"=> "Active"],
+            ["code"=>"D", "name" => "Inactive"],
         ];
     }
     public static function getProductTypes()
     {
         return [
-            ["code"=>"1", "name"=> "Raw Material"],	
-            ["code"=>"2", "name" => "Finished Product"],	
-            ["code"=>"3", "name" => "Service"],	
+            ["code"=>"1", "name"=> "Raw Material"],
+            ["code"=>"2", "name" => "Finished Product"],
+            ["code"=>"3", "name" => "Service"],
         ];
     }
     public static function getCountries()
@@ -1840,7 +1841,7 @@ class StandardTaxationCodes
             ['code'=>'PI','name'=>'Pipe'],
             ['code'=>'PO','name'=>'Pilote'],
             ['code'=>'PU','name'=>'Traypack'],
-            
+
             ['code'=>'RZ','name'=>'Rods, in bundle/bunch/truss'],
             ['code'=>'SK','name'=>'Skeletoncase'],
             ['code'=>'TY','name'=>'Tank, cylindrical'],
@@ -1857,7 +1858,7 @@ class StandardTaxationCodes
             //     'name' => "session",
             //     'code' => 'sessions'
             // ],
-            
+
             // [
             //     'name' => "hours",
             //     'code' => "hrs",
@@ -1874,8 +1875,8 @@ class StandardTaxationCodes
             //     'name' => "trips",
             //     'code' => "trips",
             // ],
-           
-            
+
+
             [
                 'name' => "other",
                 'code' => "other",
@@ -1891,7 +1892,7 @@ class StandardTaxationCodes
 
     public static function getUnitOfQuantity()
     {
-        
+
        $data=    [
         ['code' => 'KG', 'name'=>  'Kilo-Gramme', 'description'=> 'Kilo-Gramme'],
         ['code' => 'LTR', 'name'=> 'Litre', 'description'=> 'Litre'],
@@ -1945,7 +1946,7 @@ class StandardTaxationCodes
                 'name' => "session",
                 'code' => 'sessions'
             ],
-            
+
             [
                 'name' => "hours",
                 'code' => "hrs",
@@ -1962,8 +1963,8 @@ class StandardTaxationCodes
                 'name' => "trips",
                 'code' => "trips",
             ],
-           
-            
+
+
             [
                 'name' => "other",
                 'code' => "other",
