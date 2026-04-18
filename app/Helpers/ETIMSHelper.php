@@ -813,12 +813,12 @@ class ETIMSHelper
 
         $originalInvoice = Invoice::where('invoice_number',$invoice->original_invoice_number)->first();
 
-        if($originalInvoice){
-            Log::info('Original invoice found for invoice number: ' . $invoice->invoice_number);
-            Log::info($originalInvoice->id);
-            Log::info($originalInvoice->sales_control_unit_id);
+        // if($originalInvoice){
+        //     Log::info('Original invoice found for invoice number: ' . $invoice->invoice_number);
+        //     Log::info($originalInvoice->id);
+        //     Log::info($originalInvoice->sales_control_unit_id);
 
-        }
+        // }
 
         $originalcustomerKraPIN = $originalInvoice ? $originalInvoice->customer_kra_pin : null;
         $originalcustomerName = $originalInvoice ? $originalInvoice->customer_name : null;
@@ -826,7 +826,7 @@ class ETIMSHelper
         $customerKraPIN = $customer ? $customer->kra_pin : null;
         $customerName = $customer ? $customer->name : null;
 
-        $env = env('ETIMS_ENV');
+        // $env = env('ETIMS_ENV');
 
         $data = [
             "tpin" => $branch->kra_pin,
@@ -834,7 +834,7 @@ class ETIMSHelper
             "trdInvcNo" => $invoice->purchase_invoice_number,
             "cisInvcNo" =>  $invoice->invoice_number,
             "destnCountryCd" => $invoice->taxable_amount_C1 > 0 ? "ZA" : NULL,
-            "orgInvcNo" => $invoice->original_invoice_number,
+            "orgInvcNo" => $originalInvoice->control_unit_invoice_number??0,
 
             "custTpin" => $originalcustomerKraPIN ? $originalcustomerKraPIN : $customerKraPIN,
             "custNm" => $originalcustomerName ? $originalcustomerName : $customerName,
@@ -1312,7 +1312,7 @@ class ETIMSHelper
                 'pkg' => $item->packaging_unit,
                 'qtyUnitCd' => $item->quantity_unit_code,
                 'qty' => $item->quantity,
-                'prc' => $item->unit_price ? sprintf("%0.2f", $item->unit_price) : $item->unit_price,
+                'prc' =>  sprintf("%0.2f", $item->supply_amount / $item->quantity),
                 'splyAmt' => $item->supply_amount ? sprintf("%0.2f", $item->supply_amount) : $item->supply_amount,
                 'dcRt' => $item->discount_rate ? sprintf("%0.2f", $item->discount_rate) : $item->discount_rate,
                 'dcAmt' => $item->discount_amount ? sprintf("%0.2f", $item->discount_amount) : $item->discount_amount,
@@ -1326,7 +1326,7 @@ class ETIMSHelper
                 'taxAmt' => $item->tax_amount ? sprintf("%0.2f", $item->tax_amount) : $item->tax_amount,
                 'vatAmt' => $item->tax_amount ? sprintf("%0.2f", $item->tax_amount) : $item->tax_amount,
                 'totAmt' => $item->total_amount ? sprintf("%0.2f", $item->total_amount) : $item->total_amount,
-                'rrp' => $item->total_amount && $item->tax_type_code == 'B' ? sprintf("%0.2f", $item->total_amount) : $item->total_amount,
+                'rrp' => $item->unit_price && $item->tax_type_code == 'B' ? sprintf("%0.2f", $item->unit_price) : NULL,
             ];
 
             $count++;
