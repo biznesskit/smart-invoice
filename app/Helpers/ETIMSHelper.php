@@ -845,6 +845,7 @@ class ETIMSHelper
             "salesTyCd" => $invoice->sales_type_code,
             "rcptTyCd" => $invoice->receipt_type_code,
             "pmtTyCd" => $invoice->payment_type_code,
+            "lpoNumber" => NULL,
             "currencyTyCd" => "ZMW",
             "exchangeRt" => 1,
             "salesSttsCd" => $invoice->sale_status_code,

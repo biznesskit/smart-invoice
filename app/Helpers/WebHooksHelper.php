@@ -36,20 +36,21 @@ class WebHooksHelper
             'date_transmitted' => $invoice->updated_at,
 
             'success' => true,
-            'etims_total_reciept_number' => $invoice->etims_total_reciept_number,
-            'etims_current_reciept_number' => $invoice->etims_current_reciept_number,
+            'etims_total_reciept_number' => $invoice->total_reciept_number,
+            'etims_current_reciept_number' => $invoice->ecurrent_reciept_number,
 
-            'etims_internal_data' => $invoice->etims_internal_data,
-            'etims_reciept_signiture' => $invoice->etims_reciept_signiture,
-            'control_unit_date_time' => $invoice->etims_control_unit_date_time,
+            'etims_internal_data' => $invoice->internal_data,
+            'etims_reciept_signiture' => $invoice->reciept_signiture,
+            'control_unit_date_time' => $invoice->control_unit_date_time,
             'etims_control_unit_date_time' => $scuDateTimestamp,
 
-            'etims_control_unit_serial_number' => $invoice->etims_control_unit_serial_number,
-            'etims_control_unit_invoice_number' => $invoice->etims_control_unit_invoice_number,
+            'etims_control_unit_serial_number' => $invoice->control_unit_serial_number,
+            'etims_control_unit_invoice_number' => $invoice->control_unit_invoice_number,
 
             'etims_sales_control_unit_id' => $invoice->sales_control_unit_id,
             'etims_manufacturer_registration_code' => $invoice->manufacturer_registration_code,
             'invoice_number' => $invoice->invoice_number,
+            'qr_code' => $invoice->qr_code,
         ];
         // Log::info('Sending invoice webhook...');
        $response =  self::sendWebHook($endpoint, ['data' => $data]);
