@@ -61,7 +61,7 @@ return [
             'url' => env('LANDLORD_DATABASE_URL'),
             'host' => env('LANDLORD_DB_HOST', '127.0.0.1'),
             'port' => env('LANDLORD_DB_PORT', '3306'),
-            'database' => env('LANDLORD_DB_DATABASE', 'landlord'),
+            'database' => env('LANDLORD_DB_DATABASE', 'landlord_zra'),
             'username' => env('LANDLORD_DB_USERNAME', 'bizkit'),
             'password' => env('LANDLORD_DB_PASSWORD', ''),
             'unix_socket' => env('LANDLORD_DB_SOCKET', ''),
@@ -94,7 +94,7 @@ return [
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
-       
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DATABASE_URL'),
