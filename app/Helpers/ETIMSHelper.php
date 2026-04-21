@@ -653,6 +653,8 @@ class ETIMSHelper
 
     public static function saveStockMaster(StockMaster $stockMaster, Branch $branch, User $staff)
     {
+            $value = round($stockMaster->remaining_quantity, 2);
+            $max = 999999999.99;
             $data = [
                 "tpin"    => $branch->kra_pin,
                 "bhfId"  => $branch->branch_code,
@@ -663,7 +665,7 @@ class ETIMSHelper
                 "stockItemList" => [
                     [
                         "itemCd" => $stockMaster->item_code,
-                        "rsdQty" =>  $stockMaster->remaining_quantity
+                        "rsdQty" =>  min($value, $max)
                     ]
                 ]
             ];
@@ -1312,7 +1314,7 @@ class ETIMSHelper
                 'pkg' => $item->packaging_unit,
                 'qtyUnitCd' => $item->quantity_unit_code,
                 'qty' => $item->quantity,
-                'prc' =>  sprintf("%0.2f", ($item->supply_amount + $item->discount_amount) / $item->quantity),
+                'prc' =>  $item->quantity > 0 ? sprintf("%0.2f", ($item->supply_amount + $item->discount_amount) / $item->quantity) : 0,
                 'splyAmt' => sprintf("%0.2f", $item->supply_amount + $item->discount_amount ),
                 'dcRt' => $item->discount_rate ? sprintf("%0.2f", $item->discount_rate) : $item->discount_rate,
                 'dcAmt' => $item->discount_amount ? sprintf("%0.2f", $item->discount_amount) : $item->discount_amount,
@@ -1326,7 +1328,7 @@ class ETIMSHelper
                 'taxAmt' => $item->tax_amount ? sprintf("%0.2f", $item->tax_amount) : $item->tax_amount,
                 'vatAmt' => $item->tax_amount ? sprintf("%0.2f", $item->tax_amount) : $item->tax_amount,
                 'totAmt' => $item->total_amount ? sprintf("%0.2f", $item->total_amount) : $item->total_amount,
-                'rrp' => $item->supply_amount && $item->tax_type_code == 'B' ? sprintf("%0.2f", $item->supply_amount / $item->quantity) : NULL,
+                'rrp' => $item->supply_amount && $item->tax_type_code == 'B'  && $item->quantity > 0 ? sprintf("%0.2f", $item->supply_amount / $item->quantity) : NULL,
             ];
 
             $count++;
