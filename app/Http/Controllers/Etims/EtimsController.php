@@ -494,6 +494,7 @@ class EtimsController extends Controller
 
             ######################################
             //temporary fix
+            if( $tenant->id ==1 )
             $nextInvNumber = $nextInvNumber + 300;
             ######################################
 
