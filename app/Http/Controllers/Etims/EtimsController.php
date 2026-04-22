@@ -489,53 +489,18 @@ class EtimsController extends Controller
 
         // $invoice = DB::transaction(function () use (&$invoiceData, $branch, &$invoiceItemsData, $request, $staff,$tenant) {
 
-         if ($tenant && $tenant->id == 20) {
-                // Path for tenant 20: use missing invoices if available
-                $missingFile = storage_path("{$tenant->kra_pin}/missing_return_invoices.txt");
-
-                $nextInvNumber = null;
-
-                if (file_exists($missingFile)) {
-                    $lines = file($missingFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-                    if (!empty($lines)) {
-                        // Take the lowest missing invoice number
-                        $nextInvNumber = (int)array_shift($lines);
-
-                        // Only remove it from file after successful invoice creation
-                        // We'll write it back after the DB transaction commits
-                    }
-                }
-
-                // If no missing invoices, fallback to next sequential
-                if (!$nextInvNumber) {
-                    $nextInvNumber = $branch->current_fiscal_invoice_number ? $branch->current_fiscal_invoice_number + 1 : 1;
-                }
-
-                $invoiceData['invoice_number'] = $nextInvNumber;
-                $invoiceData['purchase_invoice_number'] = $nextInvNumber;
-
-                // Update branch current invoice number only if we used a sequential number
-                if ($nextInvNumber > $branch->current_fiscal_invoice_number) {
-                    $branch->update(['current_fiscal_invoice_number' => $nextInvNumber]);
-                }
-
-                // Commit missing invoice removal **after invoice is successfully created**
-                if (isset($lines)) {
-                    file_put_contents($missingFile, implode(PHP_EOL, $lines) . PHP_EOL);
-                }
-
-            }
-        else
-        {
 
             $nextInvNumber = $branch->current_fiscal_invoice_number ? $branch->current_fiscal_invoice_number + 1 : 1;
+
+            ######################################
+            //temporary fix
+            $nextInvNumber = $nextInvNumber + 300;
+            ######################################
 
             $invoiceData['invoice_number'] = $nextInvNumber;
             $invoiceData['purchase_invoice_number'] = $nextInvNumber;
 
             $branch->update(['current_fiscal_invoice_number' => $nextInvNumber]);
-        }
 
 
         $invoice = $branch->invoices()->create($invoiceData);
