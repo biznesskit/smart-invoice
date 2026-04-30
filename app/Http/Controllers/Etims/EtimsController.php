@@ -495,7 +495,7 @@ class EtimsController extends Controller
             ######################################
             //temporary fix
             if( $tenant->id ==1 )
-            $nextInvNumber = $nextInvNumber + 350;
+            $nextInvNumber = $nextInvNumber + 1500;
             ######################################
 
             $invoiceData['invoice_number'] = $nextInvNumber;
