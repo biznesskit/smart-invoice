@@ -636,8 +636,8 @@ class ETIMSHelper
                 "insurance_rate" => $item->isrcRt ?? null, //create column
                 "insurance_amount" => $item->isrcAmt ?? null, //create column
                 "expiry_date" => $item->itemExprDt ?? null, //create column
-                'status' => null,//self::checkIfItemIsService($item->itemCd) ? 'processed' : null, //if is a service set 'processed'
-                'processed_at' => null//self::checkIfItemIsService($item->itemCd) ? now() : null //i//if is a service set now()
+                'status' => self::checkIfItemIsService($item->itemCd) ? 'processed' : null, //if is a service set 'processed'
+                'processed_at' => self::checkIfItemIsService($item->itemCd) ? now() : null //i//if is a service set now()
             ]);
         endforeach;
     }
