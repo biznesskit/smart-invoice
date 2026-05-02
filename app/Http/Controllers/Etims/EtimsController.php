@@ -191,33 +191,33 @@ class EtimsController extends Controller
         return $branch->purchases()->with(['items'])->paginate(env('API_PAGINATION', 10));
     }
 
-    public function update_import_item(UpdateImportItemRequest $request, $tracking_number, ImportItem $item)
-    {
-        $branch = Branch::where('tracking_number', $tracking_number)->first();
+    // public function update_import_item(UpdateImportItemRequest $request, $tracking_number, ImportItem $item)
+    // {
+    //     $branch = Branch::where('tracking_number', $tracking_number)->first();
 
-        if (is_null($branch))
+    //     if (is_null($branch))
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Branch not found.',
-                'data' => [],
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Branch not found.',
+    //             'data' => [],
 
-            ], 404);
+    //         ], 404);
 
 
-        $data = $request->validated();
-        $data['id'] = $item->id;
-        $response = ETIMSHelper::updateImportItem($data, $branch);
-        if (is_null($response) || ! count((array)$response)) return response()->json([
-            'success' => false,
-            'message' => 'Unable to get response from Etims server',
-            'data' => [],
+    //     $data = $request->validated();
+    //     $data['id'] = $item->id;
+    //     $response = ETIMSHelper::updateImportItem($data, $branch);
+    //     if (is_null($response) || ! count((array)$response)) return response()->json([
+    //         'success' => false,
+    //         'message' => 'Unable to get response from Etims server',
+    //         'data' => [],
 
-        ], 503);
-        if ($response->resultCd != "000") return $response;
-        $item->update($data);
-        return $item;
-    }
+    //     ], 503);
+    //     if ($response->resultCd != "000") return $response;
+    //     $item->update($data);
+    //     return $item;
+    // }
 
     public function save_branch_customer(SaveBranchCustomerRequest $request, $tracking_number)
     {
@@ -492,11 +492,11 @@ class EtimsController extends Controller
 
             $nextInvNumber = $branch->current_fiscal_invoice_number ? $branch->current_fiscal_invoice_number + 1 : 1;
 
-            ######################################
-            //temporary fix
-            if( $tenant->id ==1 )
-            $nextInvNumber = $nextInvNumber + 1500;
-            ######################################
+            // ######################################
+            // //temporary fix
+            // if( $tenant->id ==1 )
+            // $nextInvNumber = $nextInvNumber + 1500;
+            // ######################################
 
             $invoiceData['invoice_number'] = $nextInvNumber;
             $invoiceData['purchase_invoice_number'] = $nextInvNumber;

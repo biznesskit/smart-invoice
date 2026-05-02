@@ -483,19 +483,19 @@ class ETIMSHelper
             $import->update(['declaration_number' => $declarationNumber]);
     }
 
-    public static function updateImportItem(array $data, Branch $branch)
+    public static function updateImportItem(array $data, Branch $branch, Item $mappedProduct)
     {
 
         $data = [
-            "tpin" => $branch->kra_pin,
+            "tin" => $branch->kra_pin,
             "bhfId" => $branch->branch_code,
             "taskCd" => $data['task_code'],
             "dclDe" => $data['declaration_date'],
             "itemSeq" => $data['item_sequence'],
             "hsCd" => $data['hs_code'],
-            "itemClsCd" => $data['item_classification_code'],
-            "itemCd" => $data['item_code'],
-            "imptItemSttsCd" => $data['import_item_status_code'],
+            "itemClsCd" => $data['item_classification_code'] ? $data['item_classification_code'] : $mappedProduct->item_classification_code,
+            "itemCd" => $data['item_code'] ? $data['item_code'] : $mappedProduct->item_code,
+            "imptItemSttsCd" => $data['import_item_status_code'] ?? 3,
             "remark" => isset($data['remark']) ? $data['remark'] : null,
             "modrId" => $data['id'],
             "modrNm" => substr($data['item_name'], 0, 60)

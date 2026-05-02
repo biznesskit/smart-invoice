@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\v1\Import;
 
 use App\Helpers\DateRangeFromStringHelper;
+use App\Helpers\ETIMSHelper;
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
 use App\Models\Import;
 use App\Models\ImportItem;
+use App\Models\Item;
 use Illuminate\Http\Request;
 
 class ImportController extends Controller
@@ -105,9 +107,17 @@ class ImportController extends Controller
         //
     }
 
-    public function process_import_item(ImportItem $importItem)
+    public function process_import_item(Request $request,ImportItem $importItem)
     {
         $importItem->update(['processed_at' => now()]);
+
+        $mappedProduct = Item::where('item_code',$request->item_code)->first();
+        if( $mappedProduct ){
+            $importItem->update(['item_id' => $mappedProduct->id]);
+            $importItem = $importItem->fresh();
+            ETIMSHelper::updateImportItem($importItem->toArray(), $importItem->import->branch,$mappedProduct);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Import item processed',
