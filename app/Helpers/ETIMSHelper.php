@@ -1259,7 +1259,7 @@ class ETIMSHelper
 
         foreach ($etimsPurchase->items as $item) :
 
-            if($item->item_id != $mappedProduct->id) continue;
+            if($item->item_code != $mappedProduct->item_code) continue;
 
             $arr = [
                 "itemSeq" => $item->item_sequence_number,

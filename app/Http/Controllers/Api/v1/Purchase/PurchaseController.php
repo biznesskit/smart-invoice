@@ -117,7 +117,7 @@ class PurchaseController extends Controller
         if( $mappedProduct ){
             $purchaseItem->update(['item_id' => $mappedProduct->id]);
             $purchaseItem = $purchaseItem->fresh();
-            ETIMSHelper::recordNewPurchase($purchase,$mappedProduct);
+            ETIMSHelper::recordNewPurchase($purchase,$purchaseItem);
         }
 
         return response()->json([
