@@ -55,7 +55,7 @@ class EtimsController extends Controller
         }
         if(empty($data['kra_pin'])) return response()->json([
             'success' => false,
-            'message' => 'Company KRA PIN is required.',
+            'message' => 'Company TPIN is required.',
             'data' => [],
         ],422);
         $branch->update($data);
@@ -63,7 +63,7 @@ class EtimsController extends Controller
 
         if (is_null($response) || ! count((array)$response))  return response()->json([
             'success' => false,
-            'message' => 'Unable to get response from Etims server',
+            'message' => 'Unable to get response from Smart invoice server',
             'data' => [],
 
         ], 503);

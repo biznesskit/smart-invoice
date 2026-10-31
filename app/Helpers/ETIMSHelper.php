@@ -1092,7 +1092,7 @@ class ETIMSHelper
     private static function sendGuzzleRequest(Branch $branch, $endPoint, $data, $method = 'POST')
     {
         $client = new Client();
-        $baseUrl = env('SMART_INVOICE_VSDC_URL', 'http://46.224.127.208:8080/VSDC');
+        $baseUrl = env('SMART_INVOICE_VSDC_URL', 'http://127.0.0.1:8086/VSDC');
 
             $cmcKey = $branch->cmc_key ? $branch->cmc_key : null;
             $data["tpin"] =  $branch->kra_pin;
