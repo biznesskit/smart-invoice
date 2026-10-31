@@ -1,0 +1,1 @@
+<p>Please find attached the daily log report.</p>

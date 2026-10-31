@@ -1,0 +1,23 @@
+#Migrate the landlord database
+php artisan migrate --database=landlord --path=database/migrations/landlord 
+
+#Migrate fresh the landlord database
+php artisan migrate:fresh --database=landlord --path=database/migrations/landlord 
+
+#Migrate fresh and seed the landlord database
+php artisan migrate:fresh --database=landlord --path=database/migrations/landlord --seed
+
+#Migrate tenants database
+php artisan tenants:migrate
+
+#Migrate fresh tenants database
+php artisan tenants:migrate --fresh
+
+#Migrate tenants database rollback
+php artisan tenants:migrate --rollback
+
+#Migrate fresh tenants database and seed
+php artisan tenants:migrate --fresh --seed
+
+#for each request, pass the following
+tenantkey ==> header mapped to the tenant domain
